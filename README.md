@@ -64,4 +64,4 @@ Source code is actively maintained by Coorbital Inc, with ongoing updates to exp
 
 ---
 
-**Disclaimer:** Pumpkyn Toolbox is provided "as is," without warranty of any kind, express or implied. Coorbital Inc. does not guarantee the accuracy or reliability of any results produced and is not responsible for any damages, losses, or consequences arising from its use. See our [license](./license.txt) file for additional information.
+**Disclaimer:** Pumpkyn Toolbox is provided "as is," without warranty of any kind, express or implied. Coorbital Inc. does not guarantee the accuracy or reliability of any results produced and is not responsible for any damages, losses, or consequences arising from its use. See our [license](./LICENSE) file for additional information.
