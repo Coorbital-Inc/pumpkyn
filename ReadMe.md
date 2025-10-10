@@ -44,8 +44,8 @@ Together, these tutorials provide a comprehensive introduction to modeling, anal
 2. Koblick, Darin C., and Patrick Kelly. "Novel Three\-body Tulip\-Shaped Orbit Families for Lunar Missions." *The Journal of the Astronautical Sciences* 72.4 (2025): 32.
 3. Koblick, Darin C. "Novel tulip\-shaped three\-body orbits for cislunar space domain awareness missions." *Proceedings of the Advanced Maui Optical and Space Surveillance (AMOS) Technologies Conference*. Maui, HI. 2023.
 
-![image_13.png](./GettingStarted_media/image_13.png)
 
+<img src="./GettingStarted_media/image_13.png" width="300">
 
 [www.coorbital.com](http://www.coorbital.com) | [info@coorbital.com](mailto:info@coorbital.com)
 
