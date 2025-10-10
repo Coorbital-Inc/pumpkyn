@@ -11,13 +11,13 @@ Welcome to pumpkyn, an open\-source toolbox for exploring tulip\-shaped orbits i
 
 Designed as both a training resource and a preliminary mission design toolkit, pumpkyn makes  three\-body dynamics accessible through a curated set of routines for orbit continuation, stability assessment, invariant manifold generation, station\-keeping cost estimation, and Earth\-centered/J2000 frame conversion. Its tutorial scripts and examples allow students and researchers to build intuition for multi\-body dynamics, while its engineering\-grade functions give mission designers the ability to quickly explore architectures and trade studies in the cislunar regime.
 
-# Toolbox Installation
+# Toolbox Installation
 1.  Download Pumpkyn.mltbx or clone this repository.
 2. In MATLAB, double\-click the .mltbx file or run:
 ```matlab
 matlab.addons.install('Pumpkyn.mltbx');
 ```
-# Tutorials
+# Tutorials
 
 This section offers step\-by\-step examples that demonstrate how to use pumpkyn’s functions in practical workflows. The tutorials highlight common analysis tasks such as orbit generation, coverage evaluation, and station\-keeping fuel requirements, and are organized to help users move from basic exploration to more advanced mission design studies.
 
@@ -39,7 +39,7 @@ This section offers step\-by\-step examples that demonstrate how to use pumpkyn�
 
 Together, these tutorials provide a comprehensive introduction to modeling, analyzing, and designing periodic and resonant trajectories in the Earth–Moon system.
 
-# References
+# References
 1.  Koblick, Darin C., and Brian McCarthy. "Station\-Keeping Techniques for Sidereal Resonant Tulip\-Shaped Three\-Body Orbits. AIAA SciTech Forum, Orlando, FL. 2026.
 2. Koblick, Darin C., and Patrick Kelly. "Novel Three\-body Tulip\-Shaped Orbit Families for Lunar Missions." *The Journal of the Astronautical Sciences* 72.4 (2025): 32.
 3. Koblick, Darin C. "Novel tulip\-shaped three\-body orbits for cislunar space domain awareness missions." *Proceedings of the Advanced Maui Optical and Space Surveillance (AMOS) Technologies Conference*. Maui, HI. 2023.
