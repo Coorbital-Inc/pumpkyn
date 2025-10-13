@@ -9,6 +9,9 @@ The continuation process incrementally adjusts an existing periodic orbit (the "
 
 This is a key technique for exploring resonant families and understanding how orbit geometry evolves as a function of energy.
 
+```matlab
+clear all;
+```
 # Specify the Tulip\-Family:
 ```matlab
                  Np = 7;          %Number of petals

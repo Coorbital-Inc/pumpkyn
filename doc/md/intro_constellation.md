@@ -32,7 +32,7 @@ Display a 3D Moon sphere located at its barycentric position \[1\-mu, 0, 0\]. Th
 ```matlab
 pumpkyn.cr3bp.showMoon(lStar,mu);
 % Plot the reference tulip-shaped orbit of the first satellite.
-plot3(r(:,1,1),r(:,2,1),r(:,3,1),'w');
+plot3(r(:,1,1),r(:,2,1),r(:,3,1),'w','LineWidth',2);
 ```
 # Show Each Starting Position of the Satellites:
 
@@ -40,5 +40,6 @@ Plot the initial positions of all satellites at t = 0 to show how they are evenl
 
 ```matlab
 plot3(squeeze(r(1,1,:)),squeeze(r(1,2,:)),squeeze(r(1,3,:)), ...
-     '.','MarkerSize',12);
+     '.','MarkerSize',20);
+set(gca,'clipping','off');
 ```

@@ -59,21 +59,22 @@ end
 This figure visualizes the total annual ΔV required to maintain a pumpkin\-shaped orbit as a function of correction frequency. It shows the lower, upper, and average estimates, with uncertainty shading.
 
 ```matlab
-figure('Color',[1 1 1]);
+figure('Color',[0 0 0]);
 dV_Avg = (dV_LB + dV_UB)./2;
     UB = dV_UB - dV_Avg;
     LB = dV_Avg - dV_LB;
 % Plot shaded uncertainty region using a helper routine
 pumpkyn.util.plotUnc(dTau.*tStar./86400,dV_Avg,UB,LB, ...
-                     'color','k','faceAlpha',0.05,'EdgeColor','none');
+                     'color','w','faceAlpha',0.2,'EdgeColor','none');
 hold on;
 ax = gca;
-ax.ColorOrder = [0 0 0; 1 0 0; 0 0 1];
+ax.ColorOrder = [1 1 1; 1 0 0; 0 0 1];
 plot(dTau.*tStar./86400,[dV_UB,dV_LB,dV_Avg],'LineWidth',2);
+set(gca,'color','k','xcolor','w','ycolor','w');
 grid on;
 xlabel('Maneuver Frequency [days]'); ylabel('\DeltaV_{tot} [m/s/yr]');
-legend('','upper bound','lower bound','average value');
-title(['Station-Keeping \DeltaV Estimation for N_p = ',num2str(Np)]);
+legend('','\color{white}upper bound','\color{white}lower bound','\color{white}average value','color','none');
+title(['\color{white}Station-Keeping \DeltaV Estimation for N_p = ',num2str(Np)]);
 % Interpretation:
 %   - As correction frequency increases (shorter dTau), total ΔV decreases
 %     because errors are corrected before they grow exponentially.

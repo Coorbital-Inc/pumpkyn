@@ -10,6 +10,7 @@
 %
 % This is a key technique for exploring resonant families and understanding 
 % how orbit geometry evolves as a function of energy.
+clear all;
 
 %% Specify the Tulip-Family:
                  Np = 7;          %Number of petals
