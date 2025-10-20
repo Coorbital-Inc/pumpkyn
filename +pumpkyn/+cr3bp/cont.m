@@ -95,6 +95,7 @@ end
         PHI0 = eye(6);
   nullDFstar = nullDF;
    converged = false;
+          x0 = x0(:);
       [~,xx] = pumpkyn.cr3bp.prop([0 tau0],[x0(1:6); PHI0(:)],mu);
           DF = computeFDeriv([x0(1:6); tau0],xx(end,:),mu);
       nullDF = null(DF, tol);

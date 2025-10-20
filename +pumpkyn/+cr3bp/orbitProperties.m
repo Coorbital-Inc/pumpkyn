@@ -37,8 +37,10 @@ function data = orbitProperties(x0,tau0,muStar,lStar)
 %                                           - UnstableEigenVals           x
 %                                           - StableEigenVecs             x
 %                                           - UnstableEigenVecs           x
-%                                           - MaxLunarOcc
-%                                           - TotLunarOcc
+%                                           - MaxLunarOcc                 x
+%                                           - TotLunarOcc                 x
+%                                           - tau (dimensionless time)    x
+%                                           - x (dimensionless states)    x
 %                                                                                         
 %% Revision History:
 %  Darin C. Koblick                                         (c) 10/2/2025
@@ -57,7 +59,8 @@ end
 
 %% Propagate Oribt a full Period
            [tau,x] = pumpkyn.cr3bp.prop(tau0,[x0(:); reshape(eye(6),[36 1])],muStar);
-
+            data.x = x;
+          data.tau = tau;
 %% Extract the Monodromy Matrix:
                  M = reshape(x(end,7:end),[6 6]);
 
