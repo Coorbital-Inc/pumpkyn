@@ -86,7 +86,10 @@ end
    CR2I66(4:6, 2 ,:) = -permute(thetaDot,[3 2 1]).*CR2I(1:3,1,:);
 
 %% Transpose the Frame (J2K -> CR3B)
-              CI2R66 = permute(CR2I66,[2 1 3]);
+CI2R66 = NaN(size(CR2I66));
+for tt=1:size(CR2I66,3)
+              CI2R66(:,:,tt) = inv(CR2I66(:,:,tt));
+end
 
 %% Offset states to occur at P2:
 if P == 1
