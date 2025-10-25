@@ -36,7 +36,7 @@ opts.Summary = append("Designed as both a training resource and a preliminary mi
                "designers the ability to quickly explore architectures and ", ...
                "trade studies in the cislunar regime.");
                 opts.AuthorName = "coorbital inc";
-             opts.AuthorCompany = "coorbiatl inc";
+             opts.AuthorCompany = "coorbital inc";
                opts.AuthorEmail = "info@coorbital.com";
           opts.ToolboxImageFile = "logo.png";
          opts.ToolboxMatlabPath = {'src','tests','doc'};
