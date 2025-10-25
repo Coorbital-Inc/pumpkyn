@@ -1,0 +1,66 @@
+function [v0,vf] = lambert2Body(r0,rf,dt,mu,dir,nmax,dim3)
+%% Purpose:
+%
+%  This is a wrapper interface for the pykep implementation of the
+%  multi-revolution lambert solver.
+%
+%% Inputs:
+%
+%  r0                       [1 x 3]             Initial Position Vector
+%                                               at t = 0
+%
+%  rf                       [1 x 3]             Final Position Vector
+%                                               at t = dt
+%
+%  dt                       double                         
+%
+%  mu                       double              Standard Gravitational
+%                                               Parameter
+%
+%  dir                      integer             +1 = prograde transfer
+%                                               -1 = retrograde transfer
+%
+%  nmax                     integer             Maximum number of
+%                                               revolutions, 0 - 1000+
+%
+%  dim3                     integer             Singleton dimension
+%                                               specifier
+%
+%% Outputs:
+%
+%  v0                       [N x 3]            Initial Velocity at r0
+%                                               and t = 0 to intercept
+%                                               rf at t = dt
+%
+%  vf                       [N x 3]             Final Velocity at rf
+%                                               and t = dt
+%
+
+if nargin == 0
+        mu = 398600.4418;
+        dt = 86400*10;
+        r0 = [-13491.4321511262
+              -42677.1843763108
+              -201.366208254528]';
+       rf = [ -4153.6338861922
+              12185.7209099644
+             -27979.3969414587]';
+      dir = -1;
+     nmax = 1000;
+  [v0,vf] = pumpkyn.pykep.lambert2Body(r0,rf,dt,mu,dir,nmax,2);
+  return;
+end
+
+%% Flatten inputs:
+[r0,fSeq] = pumpkyn.util.fDim(r0,dim3);
+       rf = pumpkyn.util.fDim(rf,dim3);
+       
+
+%% Call lambert solver:
+[v0,vf] = pumpkyn.pykep.pykep_lambert_mex(r0,rf,dt,mu,dir,nmax);
+
+%% Reshape outputs:
+fSeq.postShift(1) = size(v0,2);
+               v0 = eDim(v0,fSeq);
+               vf = eDim(vf,fSeq);
+end

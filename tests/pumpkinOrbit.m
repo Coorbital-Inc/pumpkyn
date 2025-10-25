@@ -13,7 +13,7 @@ function pumpkinOrbit()
 recordMovie = false;
 
 %% Get the tulip orbit from interpolating seeds:
-                      Np = 2; %Number of petals
+                      Np = 14; %Number of petals
                     tau0 = 2*pi; 
                       pm = +1;
 [tau0,x0,mu,tStar,lStar] = pumpkyn.cr3bp.getTulip(tau0,Np,pm);
