@@ -13,7 +13,7 @@ headerStr = {'public class GetTulip {'
 
 
 %% Get data for Np = 1:15:
-for Np=1:15
+for Np=1:20
     headerStr = genStr(Np,headerStr);
 end
 
