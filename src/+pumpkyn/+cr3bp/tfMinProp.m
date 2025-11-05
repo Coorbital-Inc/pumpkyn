@@ -87,7 +87,7 @@ if nargin == 0
      return;
 end
 
-     opts = odeset('RelTol',1e-10,'AbsTol',1e-15,'Events',@eventFunc);
+     opts = odeset('RelTol',1e-10,'AbsTol',1e-12,'Events',@eventFunc);
         y = y0(:)';
       tau = 0;
     count = 0;

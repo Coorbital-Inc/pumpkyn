@@ -26,7 +26,7 @@ function [yDot,Ht,dHdy] = tfMinEoM(tau,y,Tmax,c,muStar) %#ok<INUSD>
 %                                                   lambda_m 
 %
 %  Tmax                     double                  Maximum Thrust
-%                                                   Magnitude (N)
+%                                                   Magnitude
 %
 %  c                        double                  Exhaust Velocity
 %                                                   (c = Isp*g0) of

@@ -20,7 +20,7 @@ muStar = 0.012150585609624;         % mass ratio mu = m2/(m1+m2) (Earth-Moon)
 lStar = 389703.264829278;           % characteristic length (km) used in Pumpkyn
 tStar = 382981.289129055;           % characteristic time (s)
 ```
-# 2) Initial Low Earth Orbit (GEO) — dimensional and conversion to ND
+# 2) Initial Near Earth Orbit (GEO) — dimensional and conversion to ND
 
 Define GEO radius (approx geostationary altitude) and convert to CR3BP ND.
 

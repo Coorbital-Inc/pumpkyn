@@ -1,4 +1,4 @@
-function sol_lambda0_tf = tfMin(rv0,rvf,lambda0_tf,Tmax,c,muStar)
+function sol_lambda0_tf = tfMin(rv0,rvf,lambda0_tf,Tmax,c,muStar,solverType)
 %% Purpose:
 %
 %   Solves a minimum-time transfer between two rotating-frame states in the
@@ -47,7 +47,7 @@ function sol_lambda0_tf = tfMin(rv0,rvf,lambda0_tf,Tmax,c,muStar)
 %                                                   of flight
 %
 %  Tmax                     double                  Maximum Thrust
-%                                                   Magnitude (N)
+%                                                   Magnitude (ND)
 %
 %  c                        double                  Exhaust Velocity
 %                                                   (c = Isp*g0) of
@@ -56,6 +56,12 @@ function sol_lambda0_tf = tfMin(rv0,rvf,lambda0_tf,Tmax,c,muStar)
 %  muStar                   double                  Mass Ratio of
 %                                                   two primaries
 %                                                   muStar = m2/(m1+m2)
+%
+%
+%  solverType               string                  Numerical solver
+%                                                   options:
+%                                                   {'fsolve'}
+%                                                   'lsqnonlin'
 %
 %
 %% Outputs:
@@ -79,7 +85,7 @@ function sol_lambda0_tf = tfMin(rv0,rvf,lambda0_tf,Tmax,c,muStar)
 %% ------------------------ Begin Code Sequence ---------------------------
 
 if nargin == 0
-   useParallel = true;
+   useParallel = false;
    %Table Three: Minimum Time Solutions Computed:
    muStar = 1.21506683E-2;
     lStar = 3.84405000E5;                           %characteristic length (km)
@@ -140,6 +146,10 @@ if nargin == 0
      return;
 end
 
+if ~exist('solverType','var')
+    solverType = 'fsolve';
+end
+
 %Minimum Time Problem:
 % Find (lambda_i, tf) such that [x(tf),lambda(tf)]' satisfies
 %   r(tf) - rf = 0
@@ -151,18 +161,37 @@ end
 % equations and 8 unknowns.
 %                                   
                   m0 = 1;
-                opts = optimoptions('fsolve','Display','iter', ...
-                                    'FunctionTolerance',sqrt(1E-12), ...
-                                    'StepTolerance',1e-12, ...
-                                    'FiniteDifferenceStepSize',1e-10, ...
-                                    'MaxFunctionEvaluations',1e4, ...
-                                    'SpecifyObjectiveGradient',true, ...
-                                    'FiniteDifferenceType','central', ...
-                                     'ScaleProblem', 'jacobian', ...
-                                    'Algorithm','trust-region-dogleg');
+if strcmpi(solverType,'fsolve')
+               opts = optimoptions('fsolve','Display','iter', ...
+                                   'FunctionTolerance',(1e-12)^2, ...
+                                   'StepTolerance',1e-12, ...
+                                   'FiniteDifferenceStepSize',1e-12, ...
+                                   'MaxFunctionEvaluations',1e2, ...
+                                   'SpecifyObjectiveGradient',true, ...
+                                   'FiniteDifferenceType','central', ...
+                                   'ScaleProblem', 'jacobian', ...
+                                   'Algorithm','trust-region-dogleg');
 %Use fsolve to determine the 7 costates and final time of flight:
 [sol_lambda0_tf] = fsolve(@(x)shootingResidual(x,rv0(:),m0,rvf(:),Tmax,c,muStar), ...
-                   lambda0_tf(:),opts);
+                  lambda0_tf(:),opts);
+elseif strcmpi(solverType,'lsqnonlin')
+opts = optimoptions('lsqnonlin','Display','iter', ...
+                     'FunctionTolerance',1E-12, ...
+                     'StepTolerance',1e-14, ...
+                     'FiniteDifferenceStepSize',1e-12, ...
+                     'MaxFunctionEvaluations',1e2, ...
+                     'SpecifyObjectiveGradient',true, ...
+                     'FiniteDifferenceType','central', ...
+                     'ScaleProblem', 'jacobian', ...
+                     'Algorithm','trust-region-reflective');
+              dV = pumpkyn.cr3bp.minDeltaV(rv0(:)',rvf(:)',muStar);
+           tfMin = dV/Tmax;
+              LB = [-1000,-1000,-1000,-1000,-1000,-1000, -100, tfMin]';
+              UB = [+1000,+1000,+1000,+1000,+1000,+1000, +100, tfMin*10]';
+[sol_lambda0_tf] = lsqnonlin(@(x)shootingResidual(x,rv0(:),m0,rvf(:),Tmax, ...
+                   c,muStar),lambda0_tf(:),LB,UB,[],[],[],[],[],opts);
+end
+
 end
 
 
@@ -190,8 +219,11 @@ function [R, J] = shootingResidual(x, rv0, m0, rvf, Tmax, c, muStar)
 %     R  = residual vector for fsolve
 %     J  = analytic Jacobian  dR/dx  (optional)
 %----------------------------------------------------------------------
+      x = x(:);
 lambda0 = x(1:7);                          %Initial costates
      tf = x(8);                            %Final Time
+
+
 % --- initial augmented state + STM ---
   y0_aug = [rv0(:); m0; lambda0(:)];
 
