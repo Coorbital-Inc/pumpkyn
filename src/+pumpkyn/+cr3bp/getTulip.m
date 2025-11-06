@@ -81,7 +81,7 @@ end
     
 %% Perform spline interpolation on states:
       x0 = interp1(tau_x0{Np}(:,1),tau_x0{Np}(:,2:4),tau0,'spline');
-      x0 = [x0(:,1),zeros(size(x0,1),1),pm.*x0(:,2), ...
+      x0 = [x0(:,1),zeros(size(x0,1),1),pm.*abs(x0(:,2)), ...
             zeros(size(x0,1),1),x0(:,3),zeros(size(x0,1),1)];
 
 %% Clean up w/ Natural Parameter Cont w/ fixed period:
