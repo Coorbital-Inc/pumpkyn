@@ -118,6 +118,6 @@ function [value, isterminal, direction] = eventFunc(~,y,~,c,~)
              S = -norm(lambda_v)*c/m - lambda_m;
          value = S;
     isterminal = 1;   % stop the integration
-    direction  = 0;  % any direction
+    direction  = 0;   % any direction
 end
 

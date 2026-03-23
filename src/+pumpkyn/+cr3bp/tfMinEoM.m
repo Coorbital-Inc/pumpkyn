@@ -1,4 +1,4 @@
-function [yDot,Ht,dHdy] = tfMinEoM(tau,y,Tmax,c,muStar) %#ok<INUSD>
+function [yDot,Ht,dHdy,aThrust] = tfMinEoM(tau,y,Tmax,c,muStar) %#ok<INUSD>
 %% Purpose:
 %
 %  This routine contains the low-thrust equations of motion in the CR3BP
@@ -151,8 +151,9 @@ G(3,3) = (muStar - 1)/d3 - muStar/r3 + (3*muStar*z^2)/r5 - (3*z^2*(muStar - 1))/
            end
 %Hamiltonian for Minimum Time (Equation 17):
        alpha = -lambda_v./norm(lambda_v);                  %Equation 10
+     aThrust =  u.*alpha.*Tmax./m;                         %Thrust Aceel Term
         rDot =  v;
-        vDot =  gr + hv + u.*alpha.*Tmax./m;
+        vDot =  gr + hv + aThrust;
         mDot = -u*Tmax/c;
 
 if nargout > 1      

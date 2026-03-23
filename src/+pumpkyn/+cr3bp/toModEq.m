@@ -1,0 +1,120 @@
+function [meOEV,theta,psi] = toModEq(tau,rvND,aT,M,muStar,tStar,lStar,P)
+%% Purpose:
+%
+%  This routine will take the dimensionless states in the rotating 
+%  barycentric frame (CR3BP) and convert them to modified equinoctial 
+%  orbital elements with respect to either primary body 
+%  (e.g. Earth or Moon).  It will also take the thrust accel vector, aT, 
+%  in the CR3BP frame and convert it to the rtn (mod-equinoctial) frame of 
+%  reference and compute the pitch and yaw angles.
+%
+%  Source Reference:
+%
+%  https://spsweb.fltops.jpl.nasa.gov/portaldataops/mpg/MPG_Docs/ ...
+%  Source%20Docs/EquinoctalElements-modified.pdf
+%
+%  JPL. MODIFIED EQUINOCTIAL ORBITAL ELEMENTS 
+%
+%% Inputs:
+%
+%  tau                  [N x 1]             Dimensionless Time
+%
+%
+%  rvND                 [N x 6]             Dimensionless States in
+%                                           the CR3BP
+%
+%  M                    double              Characteristic mass of
+%                                           primaries M = m1 + m2
+%                                           in kg
+%
+%  muStar               double              Mass ratio parameter
+%                                           mu = m2/(m1+m2)
+%
+%  tStar                double              Characteristic Time [s]
+%
+%
+%  lStar                double              Characteristic Length [km]
+%
+%
+%  P                    integer             Reference Primary Body 
+%                                           1 = Earth Centered
+%                                           2 = Moon Centered
+%% Outputs:
+%
+%  meOEV                  [N x 6]           Modified Equinocital OEV:
+%                                           ---------
+%                                           p  (km)
+%                                           f
+%                                           g  
+%                                           h 
+%                                           k 
+%                                           L
+%
+%  theta                  [N x 1]           Pitch Angle [rad]
+%
+%  psi                    [N x 1]           Yaw Angle [rad]
+%
+%% Revision History:
+%  Darin C. Koblick                                         (c) 12/10/2025
+%  Copyright 2025 Coorbital, Inc.
+%% -------------------------- Begin Code Sequence -------------------------
+if nargin == 0
+       tau = 0;
+    muStar = 0.012150585609624;          % Mass ratio
+     lStar = 389703.264829278;
+     tStar = 382981.289129055;
+      rvND = [1-muStar,0,0,0,0,0];
+         M = 5.9736E24 + 7.35E22;        % Combined mass of primaries (kg)
+         P = 1;
+        aT = [0,0,1];
+[meOEV,theta,psi] = pumpkyn.cr3bp.toModEq(tau,rvND,aT,M,muStar,tStar,lStar,P);
+    return;
+end
+
+%% Convert to classical orbital elements:
+   oev = pumpkyn.cr3bp.toOrb(tau,rvND,M,muStar,tStar,lStar,P);
+
+%% Convert to modified equinoctial orbital elements:
+     a = oev(:,1);
+     e = oev(:,2);
+     i = oev(:,3);
+     o = oev(:,4);
+     O = oev(:,5);
+    nu = oev(:,6);
+
+     p = a.*(1-e.^2);
+     f = e.*cos(o + O);
+     g = e.*sin(o + O);
+     h = tan(i./2).*cos(O);
+     k = tan(i./2).*sin(O);
+     L = O + o + nu;
+
+ %% Output six element vector:    
+ meOEV = [p,f,g,h,k,L];
+
+ %% Convert the thrust unit vector from CR3BP -> PCI:
+   rv_pci = pumpkyn.cr3bp.toPCI(tau,rvND(:,1:6),muStar,tStar,lStar,P);
+   aT_pci = pumpkyn.cr3bp.toPCI(tau,[rvND(:, 1:3) + aT, aT.*0],muStar,tStar,lStar,P);
+   aT_pci = aT_pci(:, 1:3) - rv_pci(:,1:3);
+aT_pci_uv = aT_pci./pumpkyn.util.vmag(aT_pci,2);
+
+%% Formulate the Rotation Matrix [Q] MEq -> ECI    
+     i_r = rv_pci(:,1:3)./pumpkyn.util.vmag(rv_pci(:,1:3),2);
+     i_n = cross(rv_pci(:,1:3),rv_pci(:,4:6),2)./ ...
+                 pumpkyn.util.vmag(cross(rv_pci(:,1:3),rv_pci(:,4:6),2),2);
+     i_t = cross(i_n,i_r,2);
+       Q = NaN(3,3,size(meOEV,1));
+Q(:,1,:) = permute(i_r,[2 3 1]);
+Q(:,2,:) = permute(i_t,[2 3 1]);
+Q(:,3,:) = permute(i_n,[2 3 1]);
+      Qt = permute(Q,[2 1 3]);
+
+%% Transform Acceleration from ECI -> MEq (r,t,n):
+   aT_uv = pumpkyn.util.multiplyDCM(Qt, aT_pci_uv,2); 
+
+%% Determine pitch and yaw angles from the unit thrust vector:
+   theta = asin(aT_uv(:,1));                        % pitch (rad)
+     psi = atan2(aT_uv(:,3), aT_uv(:,2));           % yaw   (rad)
+ %aT_uv_2 = [sin(theta), cos(theta).*cos(psi), cos(theta).*sin(psi)];
+
+end

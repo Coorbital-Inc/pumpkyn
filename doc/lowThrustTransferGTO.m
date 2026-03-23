@@ -139,8 +139,8 @@ pumpkyn.cr3bp.showMoon(lStar, muStar, hIn);
 set(gca, 'color', 'k'); hold on;
 
 Lpts = pumpkyn.cr3bp.lagrangePts(muStar);
-plot3(Lpts(1,1), Lpts(1,2), Lpts(1,3), '.b', 'MarkerSize', 20);
-text(Lpts(1,1), Lpts(1,2), Lpts(1,3), '\color{blue}L_1');
+%plot3(Lpts(1,1), Lpts(1,2), Lpts(1,3), '.b', 'MarkerSize', 20);
+%text(Lpts(1,1), Lpts(1,2), Lpts(1,3), '\color{blue}L_1');
 
 plot3(rvInt(:,1), rvInt(:,2), rvInt(:,3), 'r', 'LineWidth', 1.2);
 plot3(rvTgt(idx_f,1), rvTgt(idx_f,2), rvTgt(idx_f,3), '.r', 'MarkerSize', 14);
