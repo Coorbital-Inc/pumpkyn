@@ -162,14 +162,20 @@ title('Figure 2: Ecc and Inc vs semi-major axis for a LEO-GEO Transfer');
 %% Show Delta-V:
 figure('Color',[1 1 1]);
 yyaxis left
+[dVtotMax,idxMax] = max(dVtot);
 plot(tau.*tStar./3600,dVtot,'k','linewidth',1.5);
 grid on; ylabel('\DeltaV [km/s]');
 set(gca,'YColor','k')    % left axis color
+text(tau(idxMax,1).*tStar./3600, dVtotMax*1.01, '\DeltaV', ...
+     'Color','k','FontSize',12,'FontWeight','bold');
 yyaxis right
-plot(tau.*tStar./3600,aT_Mag_kms.*1000*100,'r','linewidth',1.5);
+[aTtMax,idxMax] = max(aT_Mag_kms);
+plot(tau.*tStar./3600,aT_Mag_kms.*1000*100,'k','linewidth',1.5);
 grid on; ylabel('|a_T| [cm/s^2]'); xlabel('Time [Hrs]');
-set(gca,'YColor','r')    % right axis color
+set(gca,'YColor','k')    % right axis color
 aAvg = dVtot(end)/(tau(end)*tStar);
+text(tau(idxMax,1).*tStar./3600, aTtMax*1.01.*1000.*100, '|a_T|', ...
+     'Color','k','FontSize',12,'FontWeight','bold');
 title(['Average Acceleration = ',num2str(aAvg*1000*100),' [cm/s^2]']);
 
 end
