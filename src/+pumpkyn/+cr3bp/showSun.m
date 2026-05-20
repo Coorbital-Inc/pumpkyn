@@ -1,10 +1,13 @@
-function [h,globe] = showMoon(lStar,muStar,hIn)
+function [h,globe] = showSun(psi0,lStar,hIn)
 %% Purpose:
 %
-%  This routine will properly place the moon in dimensionless coordinates
-%  with the correct scaling and position at [1-mu,0,0]
+%  This routine will properly place the Sun in dimensionless coordinates
+%  with the correct scaling and position defined by alpha0.
 %
 %% Inputs:
+%
+%   psi0                double              Sun angle in Radians
+%                                           with respect to the E-M system
 %
 %  lStar                double              Characteristic Length (km)
 %
@@ -20,20 +23,22 @@ function [h,globe] = showMoon(lStar,muStar,hIn)
 %  globe                handle              Handle to Globe graphics
 %
 %% Revision History:
-%  Darin C. Koblick                                              08/26/2025
-%  Copyright 2025 Coorbital, Inc.
+%  Darin C. Koblick                                              05/20/2026
+%  Copyright 2026 Coorbital, Inc.
 %% --------------------------- Begin Code Sequence ------------------------
 
 if nargin == 0
-        lStar = 389703.264829278;
-       muStar = 0.012150585609624;
-    [h,globe] = pumpkyn.cr3bp.showMoon(lStar,muStar);
+      psi0 = 0;
+     lStar = 389703.264829278;
+    pumpkyn.cr3bp.showSun(psi0,lStar);
     return;
 end
 if ~exist('hIn','var')
     hIn = figure('color',[0 0 0]);
     set(gca(hIn),'color','k');
 end
+     %Sun-to-barycenter vector:
+     rSun = 389.1723985.*[cos(psi0), sin(psi0), 0];
+[h,globe] = pumpkyn.util.sun3D(rSun,true,1/lStar,gca(hIn));
 
-[h,globe] = pumpkyn.util.moon3D([1-muStar,0,0],true,1/lStar,gca(hIn));
 end

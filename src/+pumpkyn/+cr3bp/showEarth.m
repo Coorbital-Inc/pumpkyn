@@ -24,9 +24,9 @@ function [h,globe] = showEarth(lStar,muStar,hIn)
 %  Copyright 2025 Coorbital, Inc.
 %% --------------------------- Begin Code Sequence ------------------------
 if nargin == 0
-     lStar = 389703.264829278;
-    muStar = 0.012150585609624;
-    pumpkyn.cr3bp.showEarth(lStar,muStar);
+        lStar = 389703.264829278;
+       muStar = 0.012150585609624;
+    [h,globe] = pumpkyn.cr3bp.showEarth(lStar,muStar);
     return;
 end
 
