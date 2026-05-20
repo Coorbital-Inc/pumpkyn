@@ -40,7 +40,7 @@ end
                  opts.scale = 1./lStar;  
                   opts.type = 'day';
                opts.overlay = true;
-                 opts.atmos = true; 
+                 opts.atmos = false; 
             opts.AddShading = false;
 [h,globe] = pumpkyn.util.earth3D(opts,hIn);
 end

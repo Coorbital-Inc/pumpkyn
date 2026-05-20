@@ -171,8 +171,7 @@ end
     globe = surf(gca(www),options.posOffset(1)+x.*options.scale, ...
                  options.posOffset(2)+y.*options.scale, ...
                  options.posOffset(3)-z.*options.scale, ...
-                 'FaceColor', 'none', 'EdgeColor', 0.5*[1 1 1]); hold on;
-    shading(gca(www),'interp');
+                 'FaceColor', 'interp', 'EdgeColor', 'none'); hold on;
 
 %% Create Atmosphere
 if options.atmos
