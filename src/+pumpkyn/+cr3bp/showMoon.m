@@ -36,4 +36,6 @@ if ~exist('hIn','var')
 end
 
 [h,globe] = pumpkyn.util.moon3D([1-muStar,0,0],true,1/lStar,gca(hIn));
+set(gca,'color','k','clipping','off');
+axis(gca,'off');
 end
