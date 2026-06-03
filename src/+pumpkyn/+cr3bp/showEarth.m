@@ -24,8 +24,8 @@ function [h,globe] = showEarth(lStar,muStar,hIn)
 %  Copyright 2025 Coorbital, Inc.
 %% --------------------------- Begin Code Sequence ------------------------
 if nargin == 0
-     lStar = 389703.264829278;
-    muStar = 0.012150585609624;
+        lStar = 389703.264829278;
+       muStar = 0.012150585609624;
     [h,globe] = pumpkyn.cr3bp.showEarth(lStar,muStar);
     return;
 end
@@ -40,8 +40,7 @@ end
                  opts.scale = 1./lStar;  
                   opts.type = 'day';
                opts.overlay = true;
-                 opts.atmos = true; 
-            opts.AddShading = true;
-                  [h,globe] = pumpkyn.util.earth3D(opts,hIn);
-                  set(gca,'clipping','off');
+                 opts.atmos = false; 
+            opts.AddShading = false;
+[h,globe] = pumpkyn.util.earth3D(opts,hIn);
 end
