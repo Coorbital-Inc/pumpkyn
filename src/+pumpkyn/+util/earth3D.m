@@ -63,7 +63,6 @@ function [www,globe,hLight,cdata] = earth3D(options,www)
 %  Darin Koblick        Added julian date field for lighting effects
 %  Copyright 2025 Coorbital, Inc.
 %% -------------------- Begin Code Sequence -------------------------------
-
 if ~exist('options','var')
          options.type = 'day'; %'BW'; %'day';
       options.animate = false; %true;
@@ -109,7 +108,6 @@ if ~isfield(options,'bgcolor') && ~strcmp(options.type,'BW')
 elseif ~isfield(options,'bgcolor')
    options.bgcolor = 'k'; 
 end
-
 if ~strcmp(options.type,'BW')
     npanels = 500;   % Number of globe panels around the equator deg/panel = 360/npanels
 else
@@ -118,9 +116,8 @@ end
 alpha   = 1; % globe transparency level, 1 = opaque, through 0 = invisible
 
 % Earth texture image
-% Anything imread() will handle), but needs to be a 2:1 unprojected globe
 if strcmp(options.type,'day')
-    image_file = 'world.topo.200412.3x5400x2700.png'; %'BMNG_world.topo.bathy.200405.3.2048x1024.jpg';
+    image_file = 'earth-clouds-16k.jpg'; 
 elseif strcmp(options.type,'night')
      image_file = 'land_lights_16384.tif';
 elseif strcmp(options.type,'clouds')
@@ -150,38 +147,57 @@ end
 
 %% Create figure if not supplied
 if nargin <2
-    www = figure('Color',options.bgcolor,'NumberTitle','off','Name','3D Viewer', ...
-                 'Renderer','opengl'); 
+    www = figure('Color',options.bgcolor,'NumberTitle','off','Name','3D Viewer'); 
 end
 
-%set(www,'Renderer','opengl')
-%opengl hardware;
 % Turn off the normal axes
 if ~options.overlay
-hold on;
-set(gca(www), 'NextPlot','add', 'Visible','off');
-% Set initial view
-view(gca(www),0,30);
-axis(gca(www),'equal');
-set(gca(www),'clipping','off');
+    hold on;
+    set(gca(www), 'NextPlot','add', 'Visible','off');
+    % Set initial view
+    view(gca(www),0,30);
+    axis(gca(www),'equal');
+    set(gca(www),'clipping','off');
 end
+
 %% Create wireframe globe
 % Create a 3D meshgrid of the sphere points using the ellipsoid function
-  [x,y,z] = ellipsoid(0, 0, 0, erad, erad, prad, npanels);
-    globe = surf(gca(www),options.posOffset(1)+x.*options.scale, ...
-                 options.posOffset(2)+y.*options.scale, ...
-                 options.posOffset(3)-z.*options.scale, ...
-                 'FaceColor', 'none', 'EdgeColor', 0.5*[1 1 1]); hold on;
-    shading(gca(www),'interp');
+[x,y,z] = ellipsoid(0, 0, 0, erad, erad, prad, npanels);
+globe = surf(gca(www),options.posOffset(1)+x.*options.scale, ...
+             options.posOffset(2)+y.*options.scale, ...
+             options.posOffset(3)-z.*options.scale, ...
+             'FaceColor', 'none', 'EdgeColor', 0.5*[1 1 1]); hold on;
+shading(gca(www),'interp');
 
-%% Create Atmosphere
+%% Create Atmosphere (Volumetric Onion Glow)
 if options.atmos
-    [x, y, z] = ellipsoid(0, 0, 0, erad+100, erad+100, prad+100, npanels);
-    atmos = surf(gca(www),options.posOffset(1)+x.*options.scale, ...
-                 options.posOffset(2)+y.*options.scale, ...
-                 options.posOffset(3)-z.*options.scale, ...
-                 'FaceColor', [0.7 0.7 1], 'EdgeColor', 'none','facealpha',0.2); hold on;
+    num_layers = 8;               
+    max_alt_km = 300;             
+    base_color = [0.3, 0.6, 1.0]; 
+    
+    rad_base = sqrt(x.^2 + y.^2 + z.^2);
+    atmos = gobjects(num_layers, 1);
+    
+    for i = 1:num_layers
+        fraction = (i / num_layers)^1.5; 
+        layer_alt = max_alt_km * fraction;
+        
+        scale_ratio = (rad_base + layer_alt) ./ rad_base;
+        
+        % Apply user transformations exactly as done for the main globe
+        x_atm = options.posOffset(1) + (x .* scale_ratio) .* options.scale;
+        y_atm = options.posOffset(2) + (y .* scale_ratio) .* options.scale;
+        z_atm = options.posOffset(3) - (z .* scale_ratio) .* options.scale;
+        
+        layer_alpha = 0.05 * (1 - fraction)^2; 
+        
+        atmos(i) = surf(gca(www), x_atm, y_atm, z_atm, ...
+            'FaceColor', base_color, ...
+            'FaceAlpha', layer_alpha, ...
+            'EdgeColor', 'none'); hold on;
+    end
 end
+
 %% Texturemap the globe
 % Load Earth image for texture map
 if ~strcmp(options.type,'none')
@@ -193,10 +209,8 @@ if ~strcmp(options.type,'none')
           tmp(idx) = 0;
           cdata(:,:,td) = tmp;
        end
-
     end
-    % Set image as color data (cdata) property, and set face color to indicate
-    % a texturemap, which Matlab expects to be in cdata. Turn off the mesh edges.
+    
     if ~strcmp(options.type,'BW')
         set(globe, 'FaceColor', 'texturemap', 'CData', cdata, 'FaceAlpha', alpha, 'EdgeColor', 'none');
     else
@@ -208,81 +222,62 @@ end
 %% Insert a logo over the 3D plot
 if isfield(options,'logo')
     uistack(gca,'bottom');
-    % Creating a new axes for the logo on the current axes
-    % To create the logo at the bottom left corner of the plot use
-    % the next two lines
     haPos = get(gca,'position');
     ha2=axes('position',[1-haPos(1),haPos(2),0.1,0.1,]);
-    % To place the logo at the bottom left corner of the figure window
-    % uncomment the line below and comment the above two lines
-    % ha2=axes('position',[0, 0, .1,.04,]);
-    % Adding a LOGO to the new axes
-    % The logo file(jpeg, png, etc.) must be placed in the working path
     image(imread(options.logo));
-    % Turn the handlevisibility off so that we don't inadvertently plot
-    % into the axes again. Also, make the axes invisible
     axis(ha2,'equal');
     set(ha2,'handlevisibility','off','visible','off');
 end
 
 %% Insert Star Background:
-
 if options.stars
-    %ah = axes('unit', 'normalized', 'position', [0 0 1 1]);
-    % import the background image and show it on the axes
-    %bg = imread('starmap_g8k.jpg'); 
-    %sbg = imagesc(bg);
-    %set(sbg, 'AlphaData', 0.75);
-    % prevent plotting over the background and turn the axis off
-    %set(ah,'handlevisibility','off','visible','off')
-    % making sure the background is behind all the other uicontrols
-    %uistack(ah, 'bottom');
-    %Map the 3D star scene:
     bh = star3D(www);
     uistack(bh, 'bottom');
-    %Set the camera position:
     set(gca,'cameraviewanglemode','manual');
     axis vis3d;
     axis equal;
     zoom(100);
 end
+
 hLight = [];
 if ~strcmp(options.type,'BW') && options.AddShading
     %Adjust 3D lighting:
     if isfield(options,'jd0')
         %Determine the sun position:
-    [rSun,vSun] = sunPosVel(options.jd0);
+        [rSun,vSun] = sunPosVel(options.jd0);
         %Convert to ECEF:
-           rSun = ECItoECEF(options.jd0,rSun,vSun,vSun.*0,2);
+        rSun = ECItoECEF(options.jd0,rSun,vSun,vSun.*0,2);
         %Find the apparent azimuth and elevation angle:
         [az,el] = cart2sph(rSun(1),rSun(2),rSun(3));
-         hLight = lightangle(gca(www),270-az*180/pi,el*180/pi);
-        %Put in an arrow pointing toward the sun:
-        %quiver3(0,0,0,8000*rSun(:,1)./vmag(rSun,2), ...
-        %              8000*rSun(:,2)./vmag(rSun,2), ...
-        %              8000*rSun(:,3)./vmag(rSun,2));
+        hLight = lightangle(gca(www),270-az*180/pi,el*180/pi);
     else
-        hLight = lightangle(gca(www),180-20,20);
+        hLight = lightangle(gca(www),180-20,0);
     end
+    
     material(gca(www),'shiny');
-    globe.FaceLighting = 'flat';
-    globe.SpecularStrength = 0.1;
-    globe.SpecularExponent = 0.2;
-    globe.SpecularColorReflectance = 0.4;
-    globe.DiffuseStrength = 1;
-    globe.AmbientStrength = 0.25;
-    globe.BackFaceLighting = 'unlit';
-    globe.EdgeLighting = 'flat';
-    atmos.FaceLighting = 'flat';
-    atmos.SpecularStrength = 0.5;
-    atmos.SpecularExponent = 0.1;
-    atmos.SpecularColorReflectance = 0.2;
-    atmos.DiffuseStrength = 1;
-    atmos.AmbientStrength = 0.1;
-    atmos.BackFaceLighting = 'lit';
-    atmos.EdgeLighting = 'flat';
-    atmos.Annotation.LegendInformation.IconDisplayStyle = 'off';
+    
+    % --- Solid Body (Globe) ---
+    globe.FaceLighting = 'gouraud';     
+    globe.SpecularStrength = 0.05;      
+    globe.SpecularExponent = 10;        
+    globe.DiffuseStrength = 1.0;        
+    globe.AmbientStrength = 0.05;       
+    globe.BackFaceLighting = 'unlit';   
+    globe.EdgeLighting = 'none';
     globe.Annotation.LegendInformation.IconDisplayStyle = 'off';
+    
+    % --- Atmosphere (Volumetric Shells) ---
+    if options.atmos
+        for i = 1:length(atmos)
+            atmos(i).FaceLighting = 'gouraud';     
+            atmos(i).SpecularStrength = 0.0;       
+            atmos(i).DiffuseStrength = 1.0;        
+            atmos(i).AmbientStrength = 0.4;        
+            atmos(i).BackFaceLighting = 'lit';     
+            atmos(i).EdgeLighting = 'none';
+            atmos(i).Annotation.LegendInformation.IconDisplayStyle = 'off';
+        end
+    end
 end
 
 if options.animate
@@ -298,5 +293,4 @@ if options.animate
             end
     end
 end
-
 end

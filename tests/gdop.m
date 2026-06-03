@@ -156,7 +156,7 @@ set(gca,'color','k','xcolor','w','ycolor','w');
           hColor.Color = 'w';
           hColor.Label.String = 'gdop';
           for tt=1:size(rTgt,3)
-            plot3(rTgt(:,1,tt),rTgt(:,2,tt),rTgt(:,3,tt),'w');
+            plot3(rTgt(:,1,tt),rTgt(:,2,tt),rTgt(:,3,tt),'w','linewidth',2);
           end
           hTgts = plot3(squeeze(rTgt(1,1,:)),squeeze(rTgt(1,2,:)),squeeze(rTgt(1,3,:)),'.w','markersize',20);
           axis equal off;

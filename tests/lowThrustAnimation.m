@@ -1,3 +1,4 @@
+%% 
 function lowThrustAnimation()
 %% Low Thrust Minimum-Time Transfer: GEO -> Tulip-Shaped Orbit
 % This live script demonstrates a minimum-time low-thrust transfer from

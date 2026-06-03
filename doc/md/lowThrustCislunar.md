@@ -170,17 +170,17 @@ set(gca, 'color', 'k');
 hold on;
 
 % Plot target tulip orbit (green) and the propagated GEO orbit (red)
-plot3(rvTgt(:,1), rvTgt(:,2), rvTgt(:,3), 'g', 'linewidth', 1.2);
-plot3(rvInt(:,1), rvInt(:,2), rvInt(:,3), 'r', 'linewidth', 1.2);
+plot3(rvTgt(:,1), rvTgt(:,2), rvTgt(:,3), 'color',[29 140 255]./256,'linewidth', 0.5);
+%plot3(rvInt(:,1), rvInt(:,2), rvInt(:,3), 'r', 'linewidth', 0.5);
 
 % Show selected arrival/departure nodes with markers
-plot3(rvTgt(idx_f,1), rvTgt(idx_f,2), rvTgt(idx_f,3), '.r', 'markersize', 14);
-plot3(rvTgt(idx_f+1,1), rvTgt(idx_f+1,2), rvTgt(idx_f+1,3), '.b', 'markersize', 12);
-plot3(rvInt(idx_0,1), rvInt(idx_0,2), rvInt(idx_0,3), '.g', 'markersize', 14);
-plot3(rvInt(idx_0+5,1), rvInt(idx_0+5,2), rvInt(idx_0+5,3), '.b', 'markersize', 12);
+% plot3(rvTgt(idx_f,1), rvTgt(idx_f,2), rvTgt(idx_f,3), '.r', 'markersize', 14);
+% plot3(rvTgt(idx_f+1,1), rvTgt(idx_f+1,2), rvTgt(idx_f+1,3), '.b', 'markersize', 12);
+% plot3(rvInt(idx_0,1), rvInt(idx_0,2), rvInt(idx_0,3), '.g', 'markersize', 14);
+% plot3(rvInt(idx_0+5,1), rvInt(idx_0+5,2), rvInt(idx_0+5,3), '.b', 'markersize', 12);
 
 % Plot the propagated low-thrust transfer in white
-plot3(rv(:,1), rv(:,2), rv(:,3), 'w', 'linewidth', 1.5);
+plot3(rv(:,1), rv(:,2), rv(:,3), 'w', 'linewidth', 0.5);
 
 grid on;
 axis equal;

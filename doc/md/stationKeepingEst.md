@@ -24,6 +24,7 @@ Define the desired pumpkin orbit parameters:
 %   tStar – Characteristic time scaling [s]
 %   lStar – Characteristic length scaling [km]                          
 [tau0,x0,muStar,tStar,lStar] = pumpkyn.cr3bp.getTulip(tau0,Np,pm,1e-12);
+                        data = pumpkyn.cr3bp.orbitProperties(x0,tau0,muStar,lStar);
 ```
 # Set Up the Station\-Keeping Constraints
 

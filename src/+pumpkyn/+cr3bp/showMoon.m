@@ -27,7 +27,7 @@ function [h,globe] = showMoon(lStar,muStar,hIn)
 if nargin == 0
      lStar = 389703.264829278;
     muStar = 0.012150585609624;
-    pumpkyn.cr3bp.showMoon(lStar,muStar);
+    [h,globe] = pumpkyn.cr3bp.showMoon(lStar,muStar);
     return;
 end
 if ~exist('hIn','var')
