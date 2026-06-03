@@ -24,8 +24,8 @@ end
 bump_scale = 1;     % Exaggeration factor for the topography. 1 = True to life, 10 = Visible
 
 % Earth texture image
-    image_file = [fileparts(mfilename("fullpath")),filesep,'Moon_16k.jpg'];
-    disp_file  = [fileparts(mfilename("fullpath")),filesep,'Moon_16k_disp.tif'];
+    image_file = [fileparts(mfilename("fullpath")),filesep,'Moon_4k.jpg'];
+    disp_file  = [fileparts(mfilename("fullpath")),filesep,'Moon_4k_disp.tif'];
 
 % Mean spherical earth
 erad    = glb.EarthMoon.Rad; % equatorial radius (meters)
