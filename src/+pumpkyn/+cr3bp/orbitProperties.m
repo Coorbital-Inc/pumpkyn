@@ -39,6 +39,8 @@ function data = orbitProperties(x0,tau0,muStar,lStar)
 %                                           - UnstableEigenVecs           x
 %                                           - MaxLunarOcc                 x
 %                                           - TotLunarOcc                 x
+%                                           - MaxEarthOcc                 x
+%                                           - TotEarthOcc                 x
 %                                           - tau (dimensionless time)    x
 %                                           - x (dimensionless states)    x
 %                                                                                         
@@ -95,14 +97,26 @@ data.StabilityIndex = max(abs(0.5.*(lambda + 1./lambda)));
         data.DoublingTime = min(real(tau0.*log(2)./log(data.UnstableEigenVals)));
      end
 
-%% Compute Lunar Occultations
+%% Compute Lunar and Earth Occultations
 if exist('lStar','var')
+   data.MaxLunarOcc = 0;
+   data.TotLunarOcc = 0;
+   data.MaxEarthOcc = 0;
+   data.TotEarthOcc = 0;
               rMoon = 1737.1./lStar;
              rEarth = 6378.0./lStar;
-             tauOcc = pumpkyn.cr3bp.occultationCalc(tau,x,rEarth,rMoon,muStar);
-             tauDur = diff(tauOcc,1,2);
-   data.MaxLunarOcc = max(tauDur);
-   data.TotLunarOcc = sum(tauDur);
+      [tauOcc,pIdx] = pumpkyn.cr3bp.occultationCalc(tau,x,rEarth,rMoon,muStar);
+             tauDur = diff(tauOcc(ismember(pIdx,2),:),1,2);
+   
+     if ~isempty(tauDur)
+        data.MaxLunarOcc = max(tauDur);
+        data.TotLunarOcc = sum(tauDur);
+     end
+             tauDur = diff(tauOcc(ismember(pIdx,1),:),1,2);
+     if ~isempty(tauDur)
+        data.MaxEarthOcc = max(tauDur);
+        data.TotEarthOcc = sum(tauDur);
+     end
 end
 
 end

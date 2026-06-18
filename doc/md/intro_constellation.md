@@ -42,4 +42,5 @@ Plot the initial positions of all satellites at t = 0 to show how they are evenl
 plot3(squeeze(r(1,1,:)),squeeze(r(1,2,:)),squeeze(r(1,3,:)), ...
      '.','MarkerSize',20);
 set(gca,'clipping','off');
+axis equal;
 ```

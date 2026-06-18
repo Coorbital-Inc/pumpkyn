@@ -1,8 +1,10 @@
-function tauDur = occultationCalc(tau,x,rP1,rP2,muStar)
+function [tauDur,pIdx,oIdx] = occultationCalc(tau,x,rP1,rP2,muStar)
 %% Purpose:
 %
-%  This routine will determine the occultations of Primary 1 as a result of
-%  a satellite behind Pimary 2 in the CR3BP frame of reference.
+%  This routine will determine the occultations of either primary body
+%  in the CR3BP frame of reference. Be sure to include interpolated values for
+%  the time and the states of the satellite as this routine detects rising
+%  and falling edges.
 %
 %% Inputs:
 %
@@ -26,73 +28,128 @@ function tauDur = occultationCalc(tau,x,rP1,rP2,muStar)
 %
 %  tauDur                   [M x 2]                 Intervals of
 %                                                   dimensionless time
-%                                                   where P2 is blocking
-%                                                   or partially blocking
+%                                                   where P(2|1) is blocking
 %                                                   the LOS of the
-%                                                   satellite to P1
+%                                                   satellite to P(1|2)
+%
+%  pIdx                     [M x 1]                 Index of which
+%                                                   primary body is
+%                                                   blocking the satellite
+%                                                   from seeing the other
+%                                                   primary body.
+%                                                   pIdx = 2, means P2 is
+%                                                   blocking P1 from the
+%                                                   SV.
+%
+%  oIdx                     [N x 1]                 Boolean Occultation
+%                                                   index corresponding
+%                                                   to an occultation
+%                                                   occurance.
+%                                                    true = occultation
+%                                                   false = no occultation
+%
+%   
+%
 %% Revision History:
 %  Darin C. Koblick                                         (c) 10-03-2025
+%  Updated to include primary Idx                               06-10-2026
 %  Copyright 2025 Coorbital, Inc.
 %% --------------------- Begin Code Sequence ------------------------------
 if nargin == 0
                         tau0 = 2*pi;
-                          Np = 15;
-                          %% 
+                          Np = 20;
                           pm = +1;
-[tau0, x0, mu, tStar, lStar] = pumpkyn.cr3bp.getTulip(tau0,Np,pm,1e-12);
+ [tau0, x0, mu, tStar, lStar] = pumpkyn.cr3bp.getTulip(tau0,Np,pm,1e-12);
+                        %data = pumpkynPie.cr3bp.getCyclerData([],'3:4');
+                        %  x0 = data(end).x;
+                        %tau0 = data(end).tau;
+                         %tau0 = 0.0482006363326616;
+                         %  x0 = [ 0.996745053043675  0 0 0 1.15992877692432 0];
                      [tau,x] = pumpkyn.cr3bp.prop(tau0,x0,mu);
                          rP2 = 1737.1./lStar;
                          rP1 = 6378.0./lStar;
-                      tauDur = pumpkyn.cr3bp.occultationCalc(tau,x,rP1,rP2,mu);
+          [tauDur,pIdx,oIdx] = pumpkyn.cr3bp.occultationCalc(tau,x,rP1,rP2,mu);
                       occDur = diff(tauDur,1,2).*tStar./3600;  %Hrs
                       totOcc = sum(occDur);
+
+               figure('color',[1 1 1]);
+               plot3(x(:,1),x(:,2),x(:,3),'.k'); hold on;
+               %plot3(x(oIdx_i,1),x(oIdx_i,2),x(oIdx_i,3),'.r');
+               [xS,yS,zS] = sphere(30);
+               surf(xS.*rP2 + 1 - mu, yS.*rP2, zS.*rP2,'faceColor','k');
+               surf(xS.*rP1 - mu, yS.*rP1,zS.*rP1,'faceColor','b');
+               %Interpolate the sv based on the tauDur:
+                for td=1:size(tauDur,1)
+                    x_o = interp1(tau,x,linspace(tauDur(td,1),tauDur(td,2),60)','spline');
+                    plot3(x_o(:,1),x_o(:,2),x_o(:,3),'-r','linewidth',2);
+                end
+               axis equal;
+               set(gca,'clipping','off');
                   return;
 end
 
-%% Get angle between P1 and P2 rel to SV:
-     rS2P2 = [1-muStar,0,0] - x(:,1:3);  % SV->P2
-     rS2P1 = [-muStar,0, 0] - x(:,1:3);  % SV->P1
-     theta = pumpkyn.util.bsxAng(rS2P2,rS2P1,2);
-     P2Ang = atand(rP2./pumpkyn.util.vmag(rS2P2,2)); 
-     P1Ang = atand(rP1./pumpkyn.util.vmag(rS2P1,2));
-    minAng = P1Ang + P2Ang;
+%% Compute Min Acceptable Arclength Based on Primary Radius:
+    sMin = min([rP1,rP2]./4);
 
-%% Look for zero crossings:
-             phi = theta - minAng;  
-          phi_pm = zeros(size(phi));
- phi_pm(phi < 0) = -1;
- phi_pm(phi > 0) = +1;
+%% Interpolate SV based on arclength:
+[sTot,s] = pumpkyn.util.arclength(x(:,1:3),2);
 
-%% Find the intervals corresponding to zero crossings:
-      phi_pm_dot = diff(phi_pm,1,1);
-          idxPos = find(phi_pm_dot > 0);
-          idxNeg = find(phi_pm_dot < 0);
-       tauPos_lb = tau(idxPos);
-       tauPos_ub = tau(idxPos+1);
-       tauNeg_lb = tau(idxNeg+1);
-       tauNeg_ub = tau(idxNeg);
-      tauPos_bnd = [tauPos_lb,tauPos_ub];
-      tauNeg_bnd = [tauNeg_lb,tauNeg_ub];
-      tauPos_bnd = [min(tauPos_bnd,[],2),max(tauPos_bnd,[],2)];
-      tauNeg_bnd = [min(tauNeg_bnd,[],2),max(tauNeg_bnd,[],2)];
-          tauDur = [0 0];
+%% Form an interpolation vector w sufficient resolution to catch occultation:
+  nArc  = max(2,ceil(sTot./sMin)+1);
+    s_i = linspace(0,sTot,nArc)';
+    x_i = interp1(s,x,s_i,'spline');
+  tau_i = interp1(s,tau,s_i,'linear');
 
-%% Refine crossings w/ spline interpolation:
-if ~isempty(tauPos_bnd)
-    tauPos = zeros(size(tauPos_bnd,1),1);
-    tauNeg = zeros(size(tauNeg_bnd,1),1);
-    for ti=1:size(tauPos_bnd,1)
-            tauPos(ti,1) = fminbnd(@(x)abs(interp1(tau,phi,x,'spline')), ...
-                                   tauPos_bnd(ti,1),tauPos_bnd(ti,2));
-            tauNeg(ti,1) = fminbnd(@(x)abs(interp1(tau,phi,x,'spline')), ...
-                                   tauNeg_bnd(ti,1),tauNeg_bnd(ti,2));
-    end
-    
-    if tauPos(1) < tauNeg(1)
-         tauDur = [tauPos,tauNeg];
-    else
-         tauDur = [tauNeg,tauPos];
-    end
+%% Vector Calculation:
+    posP1 = [-muStar,0, 0];             % First Primary postion
+    posP2 = [1-muStar,0,0];             % Second Primary position
+    rS2P2 = posP2 - x_i(:,1:3);         % SV -> P2 Line of Sight
+    rS2P1 = posP1 - x_i(:,1:3);         % SV -> P1 Line of Sight
+ rS2P2Mag = pumpkyn.util.vmag(rS2P2,2);
+ rS2P1Mag = pumpkyn.util.vmag(rS2P1,2);
+
+%% Determine LOS obstruction:
+  phi = pumpkyn.util.bsxAng(rS2P2,rS2P1,2);       % Angle between LOS vectors
+
+%% Determine relative half-angles of P1 and P2:
+phiP2 = asind(min(1,rP2./rS2P2Mag));  %Half-angle of P2 rel 2 SV
+phiP1 = asind(min(1,rP1./rS2P1Mag));  %Half-angle of P1 rel 2 SV
+
+%% Is the LOS occulted by either primary?
+oIdx_i =  phi <= (phiP2 + phiP1);
+
+%% Which primary is in front of the other?
+                                pIdx_i = zeros(size(tau_i));
+pIdx_i(oIdx_i & (rS2P2Mag < rS2P1Mag)) = 2;
+pIdx_i(oIdx_i & (rS2P1Mag < rS2P2Mag)) = 1;
+
+%% Determine arclength occultation intervals for each primary:
+    dOcc = diff([false; pIdx_i == 2; false]);
+idxStart = find(dOcc == 1);
+ idxStop = find(dOcc == -1) - 1;
+tauDurP2 = [tau_i(idxStart),tau_i(idxStop)]; %#ok<FNDSB>
+    dOcc = diff([false; pIdx_i == 1; false]);
+idxStart = find(dOcc == 1);
+ idxStop = find(dOcc == -1) - 1;
+tauDurP1 = [tau_i(idxStart),tau_i(idxStop)]; %#ok<FNDSB>
+  tauDur = [tauDurP1; tauDurP2];
+
+ %% Empty Case
+if isempty(tauDur)
+  tauDur = [0 0];
+    pIdx = zeros(1,1);
+    oIdx = false(size(tau));
+    return;
 end
 
+ %% Sort based on midpoint time:
+      tauMean = mean(tauDur,2);
+[tauMean,idx] = sort(tauMean);
+       tauDur = tauDur(idx,:);
+
+%% Assign one blocker index per interval:
+    pIdx = interp1(tau_i,pIdx_i,tauMean,'nearest');
+
+%% Map occultation flag back to original tau samples:
+    oIdx = logical(interp1(tau_i,double(oIdx_i),tau,'nearest'));
 end

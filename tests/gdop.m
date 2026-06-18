@@ -135,8 +135,7 @@ set(gca,'color','k','xcolor','w','ycolor','w');
 
                 
 %Animate the sequence w/ GDOP Overlay
-            h = pumpkyn.cr3bp.showEarth(lStar,mu);
-            pumpkyn.cr3bp.showMoon(lStar,mu,h);
+            pumpkyn.cr3bp.showMoon(lStar,mu);
             %hM = moon3D(rP2,true,1./lStar);
 %thisNumVisTgts = reshape(NumVisTgts(1,:),size(x));
       tickVals = [0,4,6,8,20];

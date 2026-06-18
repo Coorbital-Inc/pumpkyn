@@ -157,7 +157,7 @@ set(gca, 'color', 'k', 'xcolor', 'w', 'ycolor', 'w');
 %% 10) 3D visualization of Earth, Moon, reference orbits, and the transfer
 hIn = figure('color', [0 0 0]);
 % showEarth/showMoon place the primary bodies scaled to lStar with correct positions
-pumpkyn.cr3bp.showEarth(lStar, muStar, hIn);  % draws Earth (dimensionless scaled)
+pumpkyn.cr3bp.showEarth([],lStar, muStar, hIn);  % draws Earth (dimensionless scaled)
 pumpkyn.cr3bp.showMoon(lStar, muStar, hIn);   % draws Moon at [1-mu, 0, 0]
 
 set(gca, 'color', 'k');

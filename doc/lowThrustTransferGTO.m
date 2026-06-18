@@ -134,7 +134,7 @@ grid on; set(gca,'Color','k','XColor','w','YColor','w');
        tau = [tau; tau(end)+tauP(2:end)];
 
 hIn = figure('color', [0 0 0]);
-pumpkyn.cr3bp.showEarth(lStar, muStar, hIn);
+pumpkyn.cr3bp.showEarth([],lStar, muStar, hIn);
 pumpkyn.cr3bp.showMoon(lStar, muStar, hIn);  
 set(gca, 'color', 'k'); hold on;
 

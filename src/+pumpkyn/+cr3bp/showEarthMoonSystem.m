@@ -40,7 +40,7 @@ if ~exist('hIn','var')
     set(gca(h),'color','k');
 end
 
-[h,globe] = pumpkyn.cr3bp.showEarth(lStar,muStar,h);
+[h,globe] = pumpkyn.cr3bp.showEarth([],lStar,muStar,h);
  [h,moon] = pumpkyn.cr3bp.showMoon(lStar,muStar,h);
 
  set(gca,'Clipping','off');

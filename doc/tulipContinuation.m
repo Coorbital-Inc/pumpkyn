@@ -48,6 +48,7 @@ tau0Max = 2*pi;
 while tau0 < tau0Max     
     if count == 0
         pumpkyn.cr3bp.showMoon(lStar,mu); hold on;
+        axis equal;
     end
     % Retrieve the initial conditions for the current tulip family member.
     % The period (tau0) is updated each loop iteration.

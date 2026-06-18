@@ -111,7 +111,7 @@ xlabel('Time [Hrs]'); ylabel('Mass Costate');
          
 %% Show 3D Trajectory in CR3BP:
 hIn = figure('color', [0 0 0]);
-pumpkyn.cr3bp.showEarth(lStar, muStar, hIn);
+pumpkyn.cr3bp.showEarth([],lStar, muStar, hIn);
 plot3(rv(:,1),rv(:,2),rv(:,3),'w');
 quiver3(rv(:,1),rv(:,2),rv(:,3),aT(:,1),aT(:,2),aT(:,3),'b');
 plot3(rvND0(:,1),rvND0(:,2),rvND0(:,3),'.g','markersize',12);

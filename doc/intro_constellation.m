@@ -40,3 +40,4 @@ plot3(r(:,1,1),r(:,2,1),r(:,3,1),'w','LineWidth',2);
 plot3(squeeze(r(1,1,:)),squeeze(r(1,2,:)),squeeze(r(1,3,:)), ...
      '.','MarkerSize',20);
 set(gca,'clipping','off');
+axis equal;
