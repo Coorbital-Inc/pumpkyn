@@ -1,4 +1,4 @@
-function lla = toLLA(jd,pos,muStar,lStar,P)
+function lla = toLLA(jd,pos,muStar,lStar,P,dim3)
 %% Purpose:
 %
 %  This routine will take dimensionless states in the rotating barycentric 
@@ -27,6 +27,8 @@ function lla = toLLA(jd,pos,muStar,lStar,P)
 %  P                    integer             Primary Body Specifier:
 %                                           1 = Earth
 %                                           2 = Moon
+%
+%  dim3                 integer             Singleton Dimension Specifier
 %
 %% Outputs:
 %
@@ -60,6 +62,15 @@ if nargin == 0
        return;
 end
 
+if nargin < 6
+    dim3 = 2;
+end
+
+%% Flatten inputs:
+                   jd = pumpkyn.util.fDim(jd,dim3);
+           [pos,fSeq] = pumpkyn.util.fDim(pos,dim3);
+  fSeq.postShift(end) = 3;
+
 if P == 2
     %Planet Radius Constants:
          rMoon  = 1737.1;
@@ -67,12 +78,18 @@ if P == 2
             rPA = pos(:,1:3) - [1-muStar,0,0];
             rPA = rPA.*lStar;
     %Convert from cartesian to spherical:    
-    [lon,lat,r] = cart2sph(rPA(:,1),rPA(:,2),rPA(:,3));
+    [lon,lat,r] = cart2sph(-rPA(:,1),-rPA(:,2),rPA(:,3));
             lla = [lat,lon,r-rMoon];
 else
-              M = 5.9736E24 + 7.35E22;              %Characteristic mass
-              x = pumpkyn.cr3bp.toJ2K(jd,pos,muStar,M,1);
-            lla = pumpkyn.util.ECI2LLA(jd,x(:,1:3),2);
+                M = 5.9736E24 + 7.35E22;              %Characteristic mass
+                G = 6.67384e-20;  
+[x,tStar2,lStar2] = pumpkyn.cr3bp.toJ2K(jd,pos,muStar,M,1,2);
+            tStar = sqrt(lStar.^3./(G.*M));
+         x(:,1:6) = x(:,1:6).*lStar./lStar2;
+         x(:,4:6) = x(:,4:6).*(tStar2./tStar);
+              lla = pumpkyn.util.ECI2LLA(jd,x(:,1:3),2);
 end
 
+%% Reshape Outputs:
+            lla = pumpkyn.util.eDim(lla,fSeq);
 end

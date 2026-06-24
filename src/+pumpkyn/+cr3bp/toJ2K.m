@@ -1,4 +1,4 @@
-function rv = toJ2K(jd0,x0,mu,M,P)
+function [rv,tStar,lStar] = toJ2K(jd0,x0,muStar,M,P,dim3)
 %% Purpose:
 %
 %  This routine will take CR3BP dimensionless states and convert them
@@ -24,14 +24,24 @@ function rv = toJ2K(jd0,x0,mu,M,P)
 %  P                    integer             Reference Primary Body 
 %                                           1 = Earth Centered
 %                                           2 = Moon Centered
+%
+%  dim3                 integer             Singleton Dimension Specifier
+%
 %% Outputs:
 %
 % rv                    [N x 6]             Dimensionalized Position
 %                                           and Velocity in J2000 Inertial
 %                                           Frame of Reference
 %                                           [km,km,km,km/s,km/s,km/s]
+%
+%  tStar                [N x 1]             Characteristic Time (s)
+%
+%  lStar                [N x 1]             Characteristic Length (km)
+%
 %% Revision History:
 %  Darin C. Koblick                                         (c) 10/01/2025
+%  Darin C. Koblick       Vectorized for N-Dim Support          06/24/2026
+%
 %  Copyright 2025 Coorbital, Inc.
 %% -------------------------- Begin Code Sequence -------------------------
 if nargin == 0
@@ -46,17 +56,26 @@ if nargin == 0
      grid on;
     return;
 end
+
+if nargin < 6
+    dim3 = 2;
+end
+
+%% Flatten inputs:
+         jd0 = pumpkyn.util.fDim(jd0,dim3);
+ [x0,fSeqND] = pumpkyn.util.fDim(x0,dim3);
+
 %% Gravitational Constant (km^3/kg/s^2)
   G = 6.67384e-20;             
 
 %% Mass of Both Primaries (kg):
-       m2 = mu.*M;                    % mass of P2 (kg)
-       m1 = (1-mu).*M;                % mass of P1 (kg)
+       m2 = muStar.*M;                    % mass of P2 (kg)
+       m1 = (1-muStar).*M;                % mass of P1 (kg)
       mu1 = G.*m1;
       mu2 = G.*m2;
 
 %% Position and Velocity of Moon wrt Earth (405 default model) (km,km/s):
-[r12,v12] = planetEphemeris(jd0,'Earth','Moon');
+[r12,v12] = pumpkyn.util.planetPosVel(jd0,'Earth','Moon');
 
 %% Instantaneous Character4istic Quantities:
     lStar = pumpkyn.util.vmag(r12,2);    
@@ -76,7 +95,7 @@ end
  thetaDot = pumpkyn.util.vmag(cross(r12,v12,2),2)./(lStar.^2);         %rad/s
 
 %% Translate rotating state such that it's basepoint is located at P2:
-       x0(:,1) = x0(:,1) - (1-mu);
+       x0(:,1) = x0(:,1) - (1-muStar);
 
 %% Dimensionalize:     
      x0(:,1:3) = x0(:,1:3).*lStar;                           %km
@@ -97,5 +116,8 @@ if P == 1
            rv(:,1:3) = rv(:,1:3) + r12;
            rv(:,4:6) = rv(:,4:6) + v12;
 end
+
+%% Reshape Outputs:
+rv = pumpkyn.util.eDim(rv,fSeqND);
 
 end

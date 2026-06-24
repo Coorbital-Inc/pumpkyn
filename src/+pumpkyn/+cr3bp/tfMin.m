@@ -85,7 +85,6 @@ function sol_lambda0_tf = tfMin(rv0,rvf,lambda0_tf,Tmax,c,muStar,solverType)
 %% ------------------------ Begin Code Sequence ---------------------------
 
 if nargin == 0
-   useParallel = false;
    %Table Three: Minimum Time Solutions Computed:
    muStar = 1.21506683E-2;
     lStar = 3.84405000E5;                           %characteristic length (km)
@@ -114,15 +113,14 @@ if nargin == 0
           15.3190846824972];
 
  sol_lambda0_tf = pumpkyn.cr3bp.tfMin(rv0,rvf, ...
-                   lambda0_tf,Tmax,c,muStar,useParallel);
-
+                   lambda0_tf,Tmax,c,muStar,'fsolve');
    %Take the solution and re-compute the trajectory: 
        [tau,rv] = pumpkyn.cr3bp.tfMinProp(sol_lambda0_tf(8), ...
                   [rv0,1,sol_lambda0_tf(1:7)'],Tmax,c,muStar);
 
      %Show the 3D trajectory:
       hIn = figure('color',[0 0 0]);
-     pumpkyn.cr3bp.showEarth(lStar,muStar,hIn); hold on;
+     pumpkyn.cr3bp.showEarth([],lStar,muStar,hIn); hold on;
      pumpkyn.cr3bp.showMoon(lStar,muStar,hIn);
      plot3(rv(:,1),rv(:,2),rv(:,3),'w'); hold on;
      plot3(rv0(:,1),rv0(:,2),rv0(:,3),'.g','markersize',15);

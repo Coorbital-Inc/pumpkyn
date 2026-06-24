@@ -1,4 +1,4 @@
-function [x0,tStar,lStar] = fromJ2K(jd0,rv,mu,M,P)
+function [x0,tStar,lStar] = fromJ2K(jd0,rv,muStar,M,P,dim3)
 %% Purpose:
 %
 %  This routine will take J2000 Inertial states with respect to
@@ -26,6 +26,9 @@ function [x0,tStar,lStar] = fromJ2K(jd0,rv,mu,M,P)
 %  P                    integer             Reference Primary Body 
 %                                           1 = Earth Centered
 %                                           2 = Moon Centered
+%
+%  dim3                 integer             Singleton Dimension Specifier
+%
 %% Outputs:
 %
 %  x0                   [N x 6]             Dimensionless States from
@@ -35,8 +38,11 @@ function [x0,tStar,lStar] = fromJ2K(jd0,rv,mu,M,P)
 %
 %  lStar                [N x 1]             Characteristic Length (km)
 %
+%                                                  
 %% Revision History:
 %  Darin C. Koblick                                         (c) 10/01/2025
+%  Darin C. Koblick       Vectorized for N-Dim Support          06/24/2026
+%
 %  Copyright 2025 Coorbital, Inc.
 %% -------------------------- Begin Code Sequence -------------------------
 if nargin == 0
@@ -49,19 +55,28 @@ if nargin == 0
      [x0,tStar,lStar] = pumpkyn.cr3bp.fromJ2K(jd0,rv,mu,M,P);
     return;
 end
+
+if nargin < 6
+    dim3 = 2;
+end
+
+%% Flatten inputs:
+[jd0,fSeq1D] = pumpkyn.util.fDim(jd0,dim3);
+ [rv,fSeqND] = pumpkyn.util.fDim(rv,dim3);
+
 %% Gravitational Constant (km^3/kg/s^2)
-  G = 6.67384e-20;             
+        G = 6.67384e-20;             
 
 %% Mass of Both Primaries (kg):
-       m2 = mu.*M;                    % mass of P2 (kg)
-       m1 = (1-mu).*M;                % mass of P1 (kg)
+       m2 = muStar.*M;                    % mass of P2 (kg)
+       m1 = (1-muStar).*M;                % mass of P1 (kg)
       mu1 = G.*m1;
       mu2 = G.*m2;
 
 %% Position and Velocity of Moon wrt Earth (405 default model) (km,km/s):
-[r12,v12] = planetEphemeris(jd0,'Earth','Moon');
+[r12,v12] = pumpkyn.util.planetPosVel(jd0,'Earth','Moon');
 
-%% Instantaneous Character4istic Quantities:
+%% Instantaneous Characteristic Quantities:
     lStar = pumpkyn.util.vmag(r12,2);    
     tStar = sqrt((lStar.^3)./(mu1 + mu2));
 
@@ -91,7 +106,7 @@ for tt=1:size(CR2I66,3)
               CI2R66(:,:,tt) = inv(CR2I66(:,:,tt));
 end
 
-%% Offset states to occur at P2:
+%% Offset states to occur at P1:
 if P == 1
            rv(:,1:3) = rv(:,1:3) - r12;
            rv(:,4:6) = rv(:,4:6) - v12;
@@ -105,5 +120,10 @@ end
            x0(:,4:6) = x0(:,4:6).*tStar./lStar;
 
 %% Offset states from P2 to rotating barycenter:
-              x0(:,1) = x0(:,1) + (1-mu);
+              x0(:,1) = x0(:,1) + (1-muStar);
+
+%% Reshape Outputs:
+    x0 = pumpkyn.util.eDim(x0,fSeqND);
+ tStar = pumpkyn.util.eDim(tStar,fSeq1D);
+ lStar = pumpkyn.util.eDim(lStar,fSeq1D);
 end

@@ -81,8 +81,8 @@ end
 
 
 %% Apply positional scaling and offsets
-    x =  x.*scale + posOffset(1);
-    y =  y.*scale + posOffset(2);
+    x = -x.*scale + posOffset(1);
+    y = -y.*scale + posOffset(2);
     z = -z.*scale + posOffset(3);
 globe = surf(h, x, y, z, 'FaceColor', 'none', 'EdgeColor', 0.5*[1 1 1]); hold on;
 

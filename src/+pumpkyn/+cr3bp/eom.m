@@ -55,6 +55,7 @@ if nargin == 0
           title(['Stability Index = ',num2str(stabilityIndex)]);
           return;
 end
+
 %% Flatten the input dimension:
             [eta,fSeq] = pumpkyn.util.fDim(eta,dim3);
 [x,y,z,xdot,ydot,zdot] = deal(eta(:,1),eta(:,2),eta(:,3), ...
@@ -120,7 +121,7 @@ F(6,3,:) = term1 - term2 - ...
   if size(F,3) == 1 && size(phi,3) == 1
         phiDot = F*phi;   
   else
-        phiDot = mntimes(F,phi,1,2,1,2); %F*phi;   
+        phiDot = pumpkyn.util.mntimes(F,phi,1,2,1,2); %F*phi;   
   end
 etaDot(:,7:42) = permute(pumpkyn.util.fDim(phiDot,3),[2 1]); 
 end
