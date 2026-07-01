@@ -12,7 +12,7 @@ function dop = dop(rRcv,rSat,maskIdx,dim3)
 %  rSat                      [t x 3 x M]            M number of Satellites                                                   
 %
 %
-%  maskIdx                   [t x N x M]            Do not consider these
+%  maskIdx                   [t x M x N]            Do not consider these
 %                                                   satellites when
 %                                                   computing the dop
 %                                                   metrics as they are

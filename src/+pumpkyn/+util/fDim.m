@@ -1,57 +1,79 @@
-function [fND fSeq] = fDim(ND,dim)
+function [fND,fSeq] = fDim(ND,dim)
 %% Purpose:
-%Take any N-D matrix in MATLAB and flatten it down into an N x size(ND,dim)
-%2-D matrix.  This is often times necessary when writing complex operations 
-%on multi-dimensional matrices.  It is also desired that after flattening, 
-%the dimension that is preserved has the correct sequence. This is especially
-%important for vector processing.
+%
+%  This routine will flatten an N-dimensional matrix into a 2-D matrix
+%  while preserving the specified dimension as the column dimension.
 %
 %% Inputs:
-% ND            [O x P x Q x R x S x ...]           Any matrix with any
-%                                                   number, N, of
-%                                                   dimensions.
 %
-% dim           double                              Specify a single
-%                                                   dimension in which to
-%                                                   preserve when creating
-%                                                   the columns of the 2-D
-%                                                   flattened matrix.
+%  ND                   N-D matrix          Input matrix
+%
+%  dim                  integer             Dimension to preserve as columns
+%                                           dim = 0 flattens to [numel x 1]
 %
 %% Outputs:
-% fND           [N x size(ND,dim)]                  A 2-D matrix with
-%                                                   N corresponding to the
-%                                                   same number of elements
-%                                                   in the ND matrix but
-%                                                   with a single dimension
-%                                                   preserved.
 %
-% fSeq           struct                             fSeq.dim is the initial
-%                                                   location of the desired
-%                                                   dimension(s) before the
-%                                                   shift sequence.
-%                                                   
-%                                                   fSeq.postShift is the
-%                                                   matrix dimensions
-%                                                   before the reshaping
-%                                                   sequence.
-%% Created By Darin Koblick (C) 07/19/2012
+%  fND                  [M x size(ND,dim)]  Flattened matrix
+%
+%  fSeq                 struct              Flattening sequence structure
+%
+%  fSeq.dim             integer             Preserved dimension
+%
+%  fSeq.postShift       [1 x D]             Matrix size after dimension
+%                                           permutation and before reshape
+%
+%% Revision History:
+%   Darin Koblick         Created                            (C) 07/19/2012
+%   Darin Koblick         Modified                               06/24/2026  
+%
+%% -------------------------- Begin Code Sequence -------------------------
+
 if isempty(ND)
-    fND = ND;
-   fSeq = [];
-   return;
+    fND  = ND;
+    fSeq = [];
+    return;
 end
-%Take the desired dimension and shift it up-front before reshaping the array
+
+if nargin < 2 || isempty(dim)
+    dim = 0;
+end
+
+if ~isscalar(dim) || dim < 0 || dim ~= floor(dim)
+    error('fDim:BadDim','dim must be a nonnegative integer scalar.');
+end
+
+% Preserve original behavior: invalid dim means flatten to column
 if dim > ndims(ND)
     dim = 0;
-end 
-           iND = shiftdim(ND,dim);
-          maxD = ndims(ND);
-fSeq.postShift = ones(1,maxD);          
-fSeq.postShift(1:ndims(iND)) = size(iND);
-      fSeq.dim = dim;
-if dim > 0
-    fND = reshape(iND,numel(ND)/size(ND,dim),size(ND,dim));
-else
-    fND = reshape(iND,numel(ND),1);
 end
+
+nDim = ndims(ND);
+
+sizeND = size(ND);
+sizeND(end+1:nDim) = 1;
+
+permOrder = localPermOrder(dim,nDim);
+
+ND = reshape(ND,sizeND);
+iND = permute(ND,permOrder);
+
+fSeq.dim       = dim;
+fSeq.postShift = sizeND(permOrder);
+
+if dim == 0
+    fND = reshape(iND,numel(ND),1);
+else
+    fND = reshape(iND,numel(ND)/sizeND(dim),sizeND(dim));
+end
+
+end
+
+function permOrder = localPermOrder(dim,nDim)
+
+if dim == 0
+    permOrder = 1:nDim;
+else
+    permOrder = [dim+1:nDim,1:dim];
+end
+
 end
