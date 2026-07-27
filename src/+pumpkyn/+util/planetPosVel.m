@@ -83,6 +83,9 @@ if nargin == 0
     [r,v] = deal([]);
     return;
 end
+
+hasPlanetEphemeris = exist('planetEphemeris','file') ~= 0;
+
 % Tuning Parameters:
 dtGridDays   = 6/24;                    % Discrete steps
 minInterpPts = 4;                       % Min number of points to interp
@@ -98,11 +101,29 @@ end
   jd0 = jd0(:);
 jdMin = min(jd0);
 jdMax = max(jd0);
+
+%Call vectorized fallbacks:
+if ~hasPlanetEphemeris
+   if strcmpi(center,'Earth') && strcmpi(target,'Moon')
+                    [r,v] = pumpkyn.util.moonPosVel(jd0);
+   elseif strcmpi(center,'Moon') && strcmpi(target,'Earth')
+                    [r,v] = pumpkyn.util.moonPosVel(jd0);
+                        r = -r;
+                        v = -v;
+   else
+   error('pumpkyn:planetPosVel:FallbackUnsupported', ...
+         ['planetEphemeris is unavailable. The moonPosVel ', ...
+          'fallback supports only Earth-to-Moon and ', ...
+          'Moon-to-Earth states.']);
+   end
+   return;
+end
+
 % Input Checks:
 if isscalar(jd0) || jdMax == jdMin
-        [r1,v1] = planetEphemeris(jd0(1),center,target);
-              r = repmat(r1,numel(jd0),1);
-              v = repmat(v1,numel(jd0),1);
+    [r1,v1] = planetEphemeris(jd0(1),center,target);
+          r = repmat(r1,numel(jd0),1);
+          v = repmat(v1,numel(jd0),1);
 else
     jdStart = jdMin - padDays;
     jdStop  = jdMax + padDays;
