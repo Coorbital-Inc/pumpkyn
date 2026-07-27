@@ -1,4 +1,4 @@
-function [h,globe] = showEarth(jd0,lStar,muStar,hIn)
+function [h,globe] = showEarth(jd0,lStar,muStar,hIn,varargin)
 %% Purpose:
 %
 %  This routine will properly place the Earth in dimensionless coordinates
@@ -14,6 +14,9 @@ function [h,globe] = showEarth(jd0,lStar,muStar,hIn)
 %                                           muStar = mu2/(mu1+mu2)
 %
 %  hIn                  handle              Optional figure or globe handle
+%
+%  Quality              char                'high' (default) or
+%                                           'interactive'
 %
 %% Outputs:
 %
@@ -47,7 +50,34 @@ if nargin == 0
     return;
 end
 
-if ~exist('hIn','var')
+hasParent = nargin >= 4 && ...
+    ~(ischar(hIn) || (isstring(hIn) && isscalar(hIn)));
+
+if nargin >= 4 && ~hasParent
+    varargin = [{hIn},varargin];
+end
+
+quality = 'interactive';
+
+if ~isempty(varargin)
+    parser = inputParser;
+    parser.FunctionName = 'pumpkyn.cr3bp.showEarth';
+
+    addParameter( ...
+        parser,'Quality',quality, ...
+        @(value) (ischar(value) && isrow(value)) || ...
+        (isstring(value) && isscalar(value)));
+
+    parse(parser,varargin{:});
+
+    quality = validatestring( ...
+        parser.Results.Quality, ...
+        {'interactive','high'}, ...
+        parser.FunctionName, ...
+        'Quality');
+end
+
+if ~hasParent
     hIn = figure('color',[0 0 0]);
     set(gca(hIn),'color','k');
     axis(gca(hIn),'off','equal');
@@ -60,6 +90,7 @@ end
                  opts.atmos = false;
             opts.AddShading = false;
                  opts.WGS84 = true;
+               opts.quality = quality;
 % If hIn is an existing globe surface, update that globe directly.
 % Otherwise, create a new globe in the supplied figure.
 if isgraphics(hIn,'surface')
@@ -79,20 +110,29 @@ else
 end
 
 if ~isempty(jd0)
-    % Get three Earth-fixed basis directions expressed in CR3BP frame
-    xObs_x = pumpkyn.cr3bp.fromLLA(jd0,[0 0 0],muStar,lStar,1);
-    xObs_y = pumpkyn.cr3bp.fromLLA(jd0,[0 pi/2 0],muStar,lStar,1);
-    xObs_z = pumpkyn.cr3bp.fromLLA(jd0,[pi/2 0 0],muStar,lStar,1);
-    % Convert absolute positions into Earth-centered direction vectors
+    % Evaluate all three Earth-fixed basis directions together so the
+    % shared Earth-Moon ephemeris is calculated only once.
+    basisLLA = [ ...
+        0,    0,    0; ...
+        0,    pi/2, 0; ...
+        pi/2, 0,    0];
+
+    basisState = pumpkyn.cr3bp.fromLLA( ...
+        repmat(jd0,3,1), ...
+        basisLLA, ...
+        muStar,lStar,1);
+
+    % Convert absolute positions into Earth-centered direction vectors.
     rE = [-muStar,0,0];
-    ex = xObs_x(1:3) - rE;
-    ey = xObs_y(1:3) - rE;
-    ez = xObs_z(1:3) - rE;
-    ex = ex ./ norm(ex);
-    ey = ey ./ norm(ey);
-    ez = ez ./ norm(ez);
+
+    basisDirection = ...
+        basisState(:,1:3)-rE;
+
+    basisDirection = ...
+        basisDirection./vecnorm(basisDirection,2,2);
+
     % Construct the sampled Earth-to-CR3BP orientation matrix.
-    DCME2C = [ex(:),ey(:),ez(:)];
+    DCME2C = basisDirection.';
     % Project the sampled matrix onto the nearest orthonormal matrix.
     % This removes numerical scale and shear that hgtransform rejects.
     [U,~,V] = svd(DCME2C);

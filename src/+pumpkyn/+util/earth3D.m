@@ -55,6 +55,9 @@ function [www,globe,hLight,cdata] = earth3D(options,www)
 %                                                scale      Scaling ratio
 %                                                           of
 %                                                           Earth Radius
+%
+%                                                quality    'high' or
+%                                                           'interactive'
 %                                               
 %
 %% Revision History:
@@ -72,6 +75,7 @@ if ~exist('options','var')
         options.scale = 1;
         options.AddShading = true;
         options.overlay = false;
+        options.quality = 'high';
 end
 if ~isfield(options,'animate')
      options.animate = false; 
@@ -100,6 +104,15 @@ end
 if ~isfield(options,'atmos')
    options.atmos = true; 
 end
+if ~isfield(options,'quality')
+   options.quality = 'high';
+end
+
+quality = validatestring( ...
+    options.quality, ...
+    {'interactive','high'}, ...
+    mfilename, ...
+    'options.quality');
 % if ~isfield(options,'logo')
 %    options.logo = 'OD_LOGO.png'; 
 % end
@@ -108,7 +121,9 @@ if ~isfield(options,'bgcolor') && ~strcmp(options.type,'BW')
 elseif ~isfield(options,'bgcolor')
    options.bgcolor = 'k'; 
 end
-if ~strcmp(options.type,'BW')
+if ~strcmp(options.type,'BW') && strcmp(quality,'interactive')
+    npanels = 180;
+elseif ~strcmp(options.type,'BW')
     npanels = 500;   % Number of globe panels around the equator deg/panel = 360/npanels
 else
     npanels = 360/20;
@@ -117,7 +132,15 @@ alpha   = 1; % globe transparency level, 1 = opaque, through 0 = invisible
 
 % Earth texture image
 if strcmp(options.type,'day')
-    image_file = 'earth-clouds-16k.jpg'; 
+    if strcmp(quality,'interactive') && ...
+            isfile(fullfile( ...
+            fileparts(mfilename('fullpath')), ...
+            'earth-clouds-4k.jpg'))
+
+        image_file = 'earth-clouds-4k.jpg';
+    else
+        image_file = 'earth-clouds-16k.jpg';
+    end
 elseif strcmp(options.type,'night')
      image_file = 'land_lights_16384.tif';
 elseif strcmp(options.type,'clouds')
@@ -162,7 +185,7 @@ end
 
 %% Create wireframe globe
 % Create a 3D meshgrid of the sphere points using the ellipsoid function
-[x,y,z] = ellipsoid(0, 0, 0, erad, erad, prad, npanels);
+[x,y,z] = getEarthMesh(erad,prad,npanels);
 globe = surf(gca(www),options.posOffset(1)+x.*options.scale, ...
              options.posOffset(2)+y.*options.scale, ...
              options.posOffset(3)-z.*options.scale, ...
@@ -201,7 +224,8 @@ end
 %% Texturemap the globe
 % Load Earth image for texture map
 if ~strcmp(options.type,'none')
-    cdata = imread(image_file);
+    cdata = readEarthTexture( ...
+        image_file,strcmp(quality,'interactive'));
     if strcmp(options.type,'infrared')
        idx = sum(cdata,3) >= 240*3;
        for td=1:size(cdata,3)
@@ -293,4 +317,53 @@ if options.animate
             end
     end
 end
+end
+
+function [x,y,z] = getEarthMesh(erad,prad,npanels)
+%% Cache the most recently used base Earth mesh.
+
+persistent cachedEquatorialRadius cachedPolarRadius cachedPanelCount
+persistent cachedX cachedY cachedZ
+
+cacheMatches = ...
+    ~isempty(cachedPanelCount) && ...
+    cachedPanelCount == npanels && ...
+    cachedEquatorialRadius == erad && ...
+    cachedPolarRadius == prad;
+
+if ~cacheMatches
+    [cachedX,cachedY,cachedZ] = ellipsoid( ...
+        0,0,0,erad,erad,prad,npanels);
+
+    cachedEquatorialRadius = erad;
+    cachedPolarRadius = prad;
+    cachedPanelCount = npanels;
+end
+
+x = cachedX;
+y = cachedY;
+z = cachedZ;
+
+end
+
+function cdata = readEarthTexture(imageFile,useCache)
+%% Cache only interactive textures to avoid retaining a 16K image in RAM.
+
+persistent cachedFile cachedImage
+
+if useCache && ...
+        ~isempty(cachedFile) && ...
+        strcmp(cachedFile,imageFile)
+
+    cdata = cachedImage;
+    return;
+end
+
+cdata = imread(imageFile);
+
+if useCache
+    cachedFile = imageFile;
+    cachedImage = cdata;
+end
+
 end

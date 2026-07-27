@@ -1,5 +1,5 @@
 function hStarSphere = stars3D( ...
-    fig,ax,backgroundMode,starImageFile,jd0)
+    fig,ax,backgroundMode,starImageFile,jd0,varargin)
 %% Purpose:
 %
 % Display an equirectangular starfield on the inside of a celestial sphere.
@@ -19,6 +19,8 @@ function hStarSphere = stars3D( ...
 % starImageFile     char      Equirectangular 2:1 starfield image
 %
 % jd0               double    Julian date used to orient the starfield
+%
+% Quality           char      'high' (default) or 'interactive'
 %
 %% Output:
 %
@@ -78,14 +80,35 @@ if nargin < 5 || isempty(jd0)
     jd0 = 2451545.0;
 end
 
+parser = inputParser;
+parser.FunctionName = 'pumpkyn.util.stars3D';
+
+addParameter( ...
+    parser,'Quality','high', ...
+    @(value) (ischar(value) && isrow(value)) || ...
+    (isstring(value) && isscalar(value)));
+
+parse(parser,varargin{:});
+
+quality = validatestring( ...
+    parser.Results.Quality, ...
+    {'interactive','high'}, ...
+    parser.FunctionName, ...
+    'Quality');
+
 %% User-adjustable starfield settings
 
 starViewAngle = 65;    % Starfield field of view in degrees
 sphereScale = 100;      % Sphere radius relative to visible scene size
 spherePadding = 1.01;  % Padding applied to star-axes limits
 
-numLongitude = 721;    % Sphere mesh longitude samples
-numLatitude = 361;     % Sphere mesh latitude samples
+if strcmp(quality,'interactive')
+    numLongitude = 181;
+    numLatitude = 91;
+else
+    numLongitude = 721;
+    numLatitude = 361;
+end
 
 fallbackWidth = 2048;
 fallbackHeight = 1024;
@@ -146,9 +169,12 @@ set(fig,'Color','k');
 %% Load the starfield image
 
 starImageFile = resolveImagePath(starImageFile);
+starImageFile = selectQualityImage( ...
+    starImageFile,quality);
 
 if ~isempty(starImageFile) && isfile(starImageFile)
-    starImage = readStarImage(starImageFile);
+    starImage = readStarImage( ...
+        starImageFile,strcmp(quality,'interactive'));
 else
     warning( ...
         ['The requested starfield image was not found. ', ...
@@ -261,6 +287,12 @@ hStarSphere = surf( ...
 
 hStarSphere.Annotation.LegendInformation.IconDisplayStyle = 'off';
 
+%% Restore the foreground before adding camera listeners
+
+% No listeners are active yet, so restoring several camera properties
+% cannot trigger redundant background updates.
+clear foregroundCleanup;
+
 %% Add one-way foreground-to-starfield synchronization
 
 % These listeners observe only the foreground axes. Starfield changes
@@ -281,14 +313,8 @@ hCameraListeners = { ...
 hStarSphere.UserData = struct( ...
     'StarAxes',hStarAxes, ...
     'CameraListeners',{hCameraListeners}, ...
-    'StarViewAngle',starViewAngle);
-
-%% Restore the exact foreground view
-
-% Clearing the cleanup object invokes restoreForegroundAxes.
-clear foregroundCleanup;
-
-drawnow;
+    'StarViewAngle',starViewAngle, ...
+    'Quality',quality);
 
 end
 
@@ -363,11 +389,34 @@ if ~isgraphics(ax,'axes') || ...
     return;
 end
 
-set(hStarAxes, ...
-    'CameraPosition',ax.CameraPosition, ...
-    'CameraTarget',ax.CameraTarget, ...
-    'CameraUpVector',ax.CameraUpVector, ...
-    'Position',ax.Position);
+propertyName = { ...
+    'CameraPosition', ...
+    'CameraTarget', ...
+    'CameraUpVector', ...
+    'Position'};
+
+propertyValue = { ...
+    ax.CameraPosition, ...
+    ax.CameraTarget, ...
+    ax.CameraUpVector, ...
+    ax.Position};
+
+setArguments = cell(0,1);
+
+for propertyNumber = 1:numel(propertyName)
+    if ~isequaln( ...
+            hStarAxes.(propertyName{propertyNumber}), ...
+            propertyValue{propertyNumber})
+
+        setArguments(end+1:end+2,1) = { ...
+            propertyName{propertyNumber}; ...
+            propertyValue{propertyNumber}};
+    end
+end
+
+if ~isempty(setArguments)
+    set(hStarAxes,setArguments{:});
+end
 
 end
 
@@ -428,11 +477,47 @@ end
 
 end
 
-function starImage = readStarImage(starImageFile)
+function starImageFile = selectQualityImage( ...
+    starImageFile,quality)
+%% Prefer the pre-scaled interactive asset when using the bundled map.
+
+if ~strcmp(quality,'interactive') || isempty(starImageFile)
+    return;
+end
+
+[imagePath,imageName,imageExtension] = ...
+    fileparts(starImageFile);
+
+if ~strcmpi( ...
+        [imageName,imageExtension], ...
+        'starmap_16k.jpg')
+    return;
+end
+
+interactiveImageFile = fullfile( ...
+    imagePath,'starmap_4k.jpg');
+
+if isfile(interactiveImageFile)
+    starImageFile = interactiveImageFile;
+end
+
+end
+
+function starImage = readStarImage(starImageFile,useCache)
 %% Purpose:
 %
 % Read the starfield image and convert it to RGB uint8 data.
 %
+
+persistent cachedFile cachedImage
+
+if useCache && ...
+        ~isempty(cachedFile) && ...
+        strcmp(cachedFile,starImageFile)
+
+    starImage = cachedImage;
+    return;
+end
 
 [starImage,colorMap] = imread(starImageFile);
 
@@ -441,7 +526,7 @@ if ~isempty(colorMap)
         255*ind2rgb(starImage,colorMap));
 end
 
-if ndims(starImage) == 2
+if ismatrix(starImage)
     starImage = repmat(starImage,[1 1 3]);
 
 elseif size(starImage,3) > 3
@@ -460,6 +545,11 @@ elseif isa(starImage,'double') || ...
     else
         starImage = uint8(starImage);
     end
+end
+
+if useCache
+    cachedFile = starImageFile;
+    cachedImage = starImage;
 end
 
 end
@@ -489,23 +579,10 @@ function [xSphere,ySphere,zSphere] = createSphereGeometry( ...
 % Construct the celestial sphere in the Earth-Moon CR3BP frame.
 %
 
-%% Construct unit directions in Galactic coordinates
+%% Construct or reuse unit directions in Galactic coordinates
 
-longitude = linspace( ...
-    pi,-pi,numLongitude);
-
-latitude = linspace( ...
-    pi/2,-pi/2,numLatitude);
-
-[longitudeGrid,latitudeGrid] = ...
-    meshgrid(longitude,latitude);
-
-cosLatitude = cos(latitudeGrid);
-
-rGalactic = [ ...
-    (cosLatitude(:).*cos(longitudeGrid(:))).'; ...
-    (cosLatitude(:).*sin(longitudeGrid(:))).'; ...
-     sin(latitudeGrid(:)).'];
+[rGalactic,sphereSize] = ...
+    getGalacticDirections(numLongitude,numLatitude);
 
 %% Rotate Galactic coordinates into J2000 coordinates
 
@@ -540,8 +617,6 @@ CR2I = [ ...
 rCR3BP = CR2I.'*rJ2000;
 
 %% Scale and position the sphere
-
-sphereSize = size(longitudeGrid);
 
 xSphere = sphereCenter(1) + ...
     sphereRadius*reshape( ...
@@ -616,5 +691,44 @@ for kk = 1:numStars
             2,1,1);
     end
 end
+
+end
+
+function [rGalactic,sphereSize] = ...
+        getGalacticDirections(numLongitude,numLatitude)
+%% Cache the most recently requested unit sphere.
+
+persistent cachedLongitudeCount cachedLatitudeCount
+persistent cachedDirection cachedSize
+
+cacheMatches = ...
+    ~isempty(cachedLongitudeCount) && ...
+    cachedLongitudeCount == numLongitude && ...
+    cachedLatitudeCount == numLatitude;
+
+if ~cacheMatches
+    longitude = linspace( ...
+        pi,-pi,numLongitude);
+
+    latitude = linspace( ...
+        pi/2,-pi/2,numLatitude);
+
+    [longitudeGrid,latitudeGrid] = ...
+        meshgrid(longitude,latitude);
+
+    cosLatitude = cos(latitudeGrid);
+
+    cachedDirection = [ ...
+        (cosLatitude(:).*cos(longitudeGrid(:))).'; ...
+        (cosLatitude(:).*sin(longitudeGrid(:))).'; ...
+         sin(latitudeGrid(:)).'];
+
+    cachedSize = size(longitudeGrid);
+    cachedLongitudeCount = numLongitude;
+    cachedLatitudeCount = numLatitude;
+end
+
+rGalactic = cachedDirection;
+sphereSize = cachedSize;
 
 end

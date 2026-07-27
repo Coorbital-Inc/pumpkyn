@@ -1,4 +1,4 @@
-function [h,globe,hIn] = showMoon(lStar,muStar,hIn)
+function [h,globe,hIn] = showMoon(lStar,muStar,hIn,varargin)
 %% Purpose:
 %
 %  This routine will properly place the moon in dimensionless coordinates
@@ -12,6 +12,9 @@ function [h,globe,hIn] = showMoon(lStar,muStar,hIn)
 %                                           muStar = mu2/(mu1+mu2)
 %
 %  hIn                  handle              Optional handle input
+%
+%  Quality              char                'high' (default) or
+%                                           'interactive'
 %
 %% Outputs:
 %
@@ -30,12 +33,47 @@ if nargin == 0
     [h,globe] = pumpkyn.cr3bp.showMoon(lStar,muStar);
     return;
 end
-if ~exist('hIn','var')
+hasParent = nargin >= 3 && ...
+    ~(ischar(hIn) || (isstring(hIn) && isscalar(hIn)));
+
+if nargin >= 3 && ~hasParent
+    varargin = [{hIn},varargin];
+end
+
+quality = 'interactive';
+
+if ~isempty(varargin)
+    parser = inputParser;
+    parser.FunctionName = 'pumpkyn.cr3bp.showMoon';
+
+    addParameter( ...
+        parser,'Quality',quality, ...
+        @(value) (ischar(value) && isrow(value)) || ...
+        (isstring(value) && isscalar(value)));
+
+    parse(parser,varargin{:});
+
+    quality = validatestring( ...
+        parser.Results.Quality, ...
+        {'interactive','high'}, ...
+        parser.FunctionName, ...
+        'Quality');
+end
+
+if ~hasParent
     hIn = figure('color',[0 0 0]);
     set(gca(hIn),'color','k');
 end
 
-[h,globe] = pumpkyn.util.moon3D([1-muStar,0,0],true,1/lStar,gca(hIn));
-set(gca,'color','k','clipping','off');
-axis(gca,'off');
+if isgraphics(hIn,'axes')
+    ax = hIn;
+else
+    ax = gca(hIn);
+end
+
+[h,globe] = pumpkyn.util.moon3D( ...
+    [1-muStar,0,0],true,1/lStar,ax, ...
+    'Quality',quality);
+set(ax,'color','k','clipping','off');
+axis(ax,'off','equal');
 end
