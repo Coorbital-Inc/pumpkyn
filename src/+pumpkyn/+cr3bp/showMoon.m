@@ -1,4 +1,4 @@
-function [h,globe] = showMoon(lStar,muStar,hIn)
+function [h,globe,hIn] = showMoon(lStar,muStar,hIn)
 %% Purpose:
 %
 %  This routine will properly place the moon in dimensionless coordinates
