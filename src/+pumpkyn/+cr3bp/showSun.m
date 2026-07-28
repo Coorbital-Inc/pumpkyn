@@ -98,7 +98,8 @@ end
 
 %% Determine the Sun position in the rotating frame
 [rSunJ2K,vSunJ2K] = pumpkyn.util.planetPosVel( ...
-    jd0,'Earth','Sun');
+    jd0,'Earth','Sun', ...
+    'Method','analytic');
 
 [sunState,~,epochLStar] = pumpkyn.cr3bp.fromJ2K( ...
     jd0,[rSunJ2K,vSunJ2K],muStar,M,1,2);

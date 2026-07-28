@@ -146,6 +146,9 @@ hold(h,'on');
 hLight = gobjects(0);
 
 if addLighting
+    % This standalone viewer has no epoch or inertial-frame definition, so
+    % its local light keeps a fixed scene direction. Higher-level dated
+    % scenes disable this light and supply their own analytical Sun light.
     set(globe, ...
         'FaceLighting','gouraud', ...
         'AmbientStrength',0.5, ...

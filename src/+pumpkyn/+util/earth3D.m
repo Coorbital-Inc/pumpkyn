@@ -271,10 +271,14 @@ hLight = [];
 if ~strcmp(options.type,'BW') && options.AddShading
     %Adjust 3D lighting:
     if isfield(options,'jd0')
-        %Determine the sun position:
-        [rSun,vSun] = sunPosVel(options.jd0);
+        % Rendering needs the Sun direction rather than a high-fidelity
+        % planetary state, so use the fast analytical ephemeris explicitly.
+        [rSun,vSun] = pumpkyn.util.planetPosVel( ...
+            options.jd0,'Earth','Sun', ...
+            'Method','analytic');
         %Convert to ECEF:
-        rSun = ECItoECEF(options.jd0,rSun,vSun,vSun.*0,2);
+        rSun = pumpkyn.util.ECItoECEF( ...
+            options.jd0,rSun,vSun,vSun.*0,2);
         %Find the apparent azimuth and elevation angle:
         [az,el] = cart2sph(rSun(1),rSun(2),rSun(3));
         hLight = lightangle(gca(www),270-az*180/pi,el*180/pi);

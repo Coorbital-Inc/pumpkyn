@@ -1,10 +1,18 @@
-function [r,v] = planetPosVel(jd0,center,target)
+function [r,v] = planetPosVel(jd0,center,target,varargin)
 %% Purpose:
 %
-%  This routine will compute the position and velocity of one planet with
-%  respect to another using planetEphemeris default ephemeris
-%  model. The ephemeris is evaluated on a reduced Julian Date grid and
-%  interpolated back to the requested epochs for improved execution speed.
+%  This routine computes the position and velocity of one celestial body
+%  with respect to another. It can use the high-fidelity planetEphemeris
+%  model or the faster analytical Sun and Moon models included with
+%  Pumpkyn. Dense planetEphemeris requests are evaluated on a reduced
+%  Julian Date grid and interpolated back to the requested epochs.
+%
+%% Calling Syntax:
+%
+%  [r,v] = pumpkyn.util.planetPosVel(jd0,center,target)
+%
+%  [r,v] = pumpkyn.util.planetPosVel( ...
+%      jd0,center,target,'Method',method)
 %
 %% Inputs:
 %
@@ -32,6 +40,22 @@ function [r,v] = planetPosVel(jd0,center,target)
 %                                           'Neptune', 'Pluto',
 %                                           'SolarSystem', and 'EarthMoon'
 %
+%  Method               char/string         Ephemeris calculation method:
+%
+%                                            'auto' (default) uses
+%                                            planetEphemeris when available
+%                                            and otherwise uses an analytical
+%                                            model for supported body pairs.
+%
+%                                            'toolbox' requires and uses
+%                                            planetEphemeris.
+%
+%                                            'analytic' uses the faster
+%                                            Pumpkyn Sun or Moon model. This
+%                                            method supports Earth-Moon and
+%                                            Earth-Sun states in either
+%                                            direction.
+%
 %% Outputs:
 %
 %  r                    [N x 3]             Position of target with respect
@@ -51,10 +75,11 @@ if nargin == 0
     center = 'Earth';
     target = 'Moon';
     jd0 = pumpkyn.util.juliandate('01/01/2000 12:00:00');
-      t = (0:60:86400*27)';
+      t = (0:24*60:86400*365)';
      jd = jd0 + t./86400;
     tTime = tic;
-    [r,v] = pumpkyn.util.planetPosVel(jd,center,target);
+    [r,v] = pumpkyn.util.planetPosVel( ...
+        jd,center,target,'Method','auto');
     eTime = toc(tTime);
     tTime = tic;
 [r_i,v_i] = planetEphemeris(jd,center,target);
@@ -64,14 +89,14 @@ if nargin == 0
 
     figure('color',[1 1 1]);
     subplot(1,2,1);
-    plot(t./86400,dr);
+    plot(t./86400,100.*dr./pumpkyn.util.vmag(r_i,2));
     grid on;
-    ylabel('Position Error (RSS) [km]');
+    ylabel('Position Error (RSS) [%]');
     xlabel('Time [Days]');
     subplot(1,2,2);
-    plot(t./86400,dv);
+    plot(t./86400,100.*dv./pumpkyn.util.vmag(v_i,2));
     grid on;
-    ylabel('Velocity Error (RSS) [km/s]');
+    ylabel('Velocity Error (RSS) [%]');
     xlabel('Time [Days]');
 
     fprintf('moonPosVel self-test:\n');
@@ -84,7 +109,7 @@ if nargin == 0
     return;
 end
 
-hasPlanetEphemeris = exist('planetEphemeris','file') ~= 0;
+method = parseMethod(varargin);
 
 % Tuning Parameters:
 dtGridDays   = 6/24;                    % Discrete steps
@@ -97,29 +122,35 @@ if isempty(jd0)
     v = zeros(0,3);
     return;
 end
-% Min/Max of timespan
-  jd0 = jd0(:);
+jd0 = jd0(:);
+
+useAnalytic = strcmp(method,'analytic');
+
+if ~useAnalytic
+    hasPlanetEphemeris = ...
+        exist('planetEphemeris','file') ~= 0;
+
+    if ~hasPlanetEphemeris
+        if strcmp(method,'auto')
+            useAnalytic = true;
+        else
+            error( ...
+                'pumpkyn:planetPosVel:PlanetEphemerisUnavailable', ...
+                ['Method=''toolbox'' requires planetEphemeris, but ', ...
+                 'planetEphemeris is not available on the MATLAB path.']);
+        end
+    end
+end
+
+if useAnalytic
+    [r,v] = evaluateAnalyticModel(jd0,center,target);
+    return;
+end
+
+% Min/Max of requested timespan
 jdMin = min(jd0);
 jdMax = max(jd0);
 
-%Call vectorized fallbacks:
-if ~hasPlanetEphemeris
-   if strcmpi(center,'Earth') && strcmpi(target,'Moon')
-                    [r,v] = pumpkyn.util.moonPosVel(jd0);
-   elseif strcmpi(center,'Moon') && strcmpi(target,'Earth')
-                    [r,v] = pumpkyn.util.moonPosVel(jd0);
-                        r = -r;
-                        v = -v;
-   else
-   error('pumpkyn:planetPosVel:FallbackUnsupported', ...
-         ['planetEphemeris is unavailable. The moonPosVel ', ...
-          'fallback supports only Earth-to-Moon and ', ...
-          'Moon-to-Earth states.']);
-   end
-   return;
-end
-
-% Input Checks:
 if isscalar(jd0) || jdMax == jdMin
     [r1,v1] = planetEphemeris(jd0(1),center,target);
           r = repmat(r1,numel(jd0),1);
@@ -133,5 +164,76 @@ else
           r = interp1(jd0_i,r_i,jd0,iMethod);
           v = interp1(jd0_i,v_i,jd0,iMethod);
 end
+
+end
+
+function method = parseMethod(optionArguments)
+%% Parse the Method name-value option.
+
+method = 'auto';
+
+if isempty(optionArguments)
+    return;
+end
+
+if numel(optionArguments) ~= 2 || ...
+        ~isTextScalar(optionArguments{1}) || ...
+        ~strcmpi(char(optionArguments{1}),'Method')
+
+    error( ...
+        'pumpkyn:planetPosVel:InvalidOptions', ...
+        ['Specify the optional calculation method as ', ...
+         '''Method'',''auto'', ''Method'',''toolbox'', or ', ...
+         '''Method'',''analytic''.']);
+end
+
+methodValue = optionArguments{2};
+
+if ~isTextScalar(methodValue)
+    error( ...
+        'pumpkyn:planetPosVel:InvalidMethod', ...
+        'Method must be ''auto'', ''toolbox'', or ''analytic''.');
+end
+
+method = validatestring( ...
+    char(methodValue), ...
+    {'auto','toolbox','analytic'}, ...
+    'pumpkyn.util.planetPosVel', ...
+    'Method');
+
+end
+
+
+function [r,v] = evaluateAnalyticModel(jd0,center,target)
+%% Evaluate a supported analytical relative-state model.
+
+if strcmpi(center,'Earth') && strcmpi(target,'Moon')
+    [r,v] = pumpkyn.util.moonPosVel(jd0);
+elseif strcmpi(center,'Moon') && strcmpi(target,'Earth')
+    [r,v] = pumpkyn.util.moonPosVel(jd0);
+    r = -r;
+    v = -v;
+elseif strcmpi(center,'Earth') && strcmpi(target,'Sun')
+    [r,v] = pumpkyn.util.sunPosVel(jd0);
+elseif strcmpi(center,'Sun') && strcmpi(target,'Earth')
+    [r,v] = pumpkyn.util.sunPosVel(jd0);
+    r = -r;
+    v = -v;
+else
+    error( ...
+        'pumpkyn:planetPosVel:FallbackUnsupported', ...
+        ['Method=''analytic'' supports only Earth-Moon and ', ...
+         'Earth-Sun states in either direction.']);
+end
+
+end
+
+
+function valid = isTextScalar(value)
+%% Return true for a character row or scalar string.
+
+valid = ...
+    (ischar(value) && isrow(value)) || ...
+    (isstring(value) && isscalar(value));
 
 end
