@@ -232,6 +232,17 @@ hStarAxes = axes( ...
     'Clipping','off', ...
     'Tag','stars3DBackgroundAxes');
 
+% This axes is a visual backdrop only. Removing both its toolbar and its
+% gesture set prevents it from competing with the foreground scene for
+% mouse input, and avoids an extra toolbar in figures containing both axes.
+if isprop(hStarAxes,'Toolbar')
+    hStarAxes.Toolbar = [];
+end
+
+if isprop(hStarAxes,'Interactions')
+    hStarAxes.Interactions = [];
+end
+
 uistack(hStarAxes,'bottom');
 uistack(ax,'top');
 

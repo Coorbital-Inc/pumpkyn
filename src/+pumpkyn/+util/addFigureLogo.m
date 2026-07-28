@@ -168,6 +168,27 @@ end
 
 axis(hLogoAxes,'image');
 axis(hLogoAxes,'off');
+
+% image can reset its parent axes when NextPlot is 'replace'. Apply the
+% overlay-only behavior after drawing so the logo never regains a toolbar
+% or competes with the foreground scene for mouse input.
+set(hLogoAxes, ...
+    'Color','none', ...
+    'Visible','off', ...
+    'HitTest','off', ...
+    'PickableParts','none', ...
+    'HandleVisibility','off', ...
+    'Clipping','off', ...
+    'Tag','figureLogoAxes');
+
+if isprop(hLogoAxes,'Toolbar')
+    hLogoAxes.Toolbar = [];
+end
+
+if isprop(hLogoAxes,'Interactions')
+    hLogoAxes.Interactions = [];
+end
+
 uistack(hLogoAxes,'top');
 
 %% Install a figure-specific resize callback
