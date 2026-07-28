@@ -16,6 +16,9 @@ function [h,globe,hIn] = showMoon(lStar,muStar,hIn,varargin)
 %  Quality              char                'high' (default) or
 %                                           'interactive'
 %
+%  AddLighting         logical             Create the standalone Moon
+%                                           light (default true)
+%
 %% Outputs:
 %
 %  h                    handle              Handle to current axes
@@ -41,6 +44,7 @@ if nargin >= 3 && ~hasParent
 end
 
 quality = 'interactive';
+addLighting = true;
 
 if ~isempty(varargin)
     parser = inputParser;
@@ -51,6 +55,11 @@ if ~isempty(varargin)
         @(value) (ischar(value) && isrow(value)) || ...
         (isstring(value) && isscalar(value)));
 
+    addParameter( ...
+        parser,'AddLighting',addLighting, ...
+        @(value) (islogical(value) && isscalar(value)) || ...
+        (isnumeric(value) && isscalar(value) && ismember(value,[0 1])));
+
     parse(parser,varargin{:});
 
     quality = validatestring( ...
@@ -58,6 +67,8 @@ if ~isempty(varargin)
         {'interactive','high'}, ...
         parser.FunctionName, ...
         'Quality');
+
+    addLighting = logical(parser.Results.AddLighting);
 end
 
 if ~hasParent
@@ -73,7 +84,8 @@ end
 
 [h,globe] = pumpkyn.util.moon3D( ...
     [1-muStar,0,0],true,1/lStar,ax, ...
-    'Quality',quality);
+    'Quality',quality, ...
+    'AddLighting',addLighting);
 set(ax,'color','k','clipping','off');
 axis(ax,'off','equal');
 end

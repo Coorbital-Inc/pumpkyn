@@ -190,6 +190,7 @@ globe = surf(gca(www),options.posOffset(1)+x.*options.scale, ...
              options.posOffset(2)+y.*options.scale, ...
              options.posOffset(3)-z.*options.scale, ...
              'FaceColor', 'none', 'EdgeColor', 0.5*[1 1 1]); hold on;
+pumpkyn.util.setOutwardNormals(globe,options.posOffset);
 shading(gca(www),'interp');
 
 %% Create Atmosphere (Volumetric Onion Glow)
@@ -218,6 +219,9 @@ if options.atmos
             'FaceColor', base_color, ...
             'FaceAlpha', layer_alpha, ...
             'EdgeColor', 'none'); hold on;
+
+        pumpkyn.util.setOutwardNormals( ...
+            atmos(i),options.posOffset);
     end
 end
 
@@ -278,8 +282,6 @@ if ~strcmp(options.type,'BW') && options.AddShading
         hLight = lightangle(gca(www),180-20,0);
     end
     
-    material(gca(www),'shiny');
-    
     % --- Solid Body (Globe) ---
     globe.FaceLighting = 'gouraud';     
     globe.SpecularStrength = 0.05;      
@@ -302,6 +304,16 @@ if ~strcmp(options.type,'BW') && options.AddShading
             atmos(i).Annotation.LegendInformation.IconDisplayStyle = 'off';
         end
     end
+else
+    % Explicitly opt out of lighting in shared 3-D scenes. Surface objects
+    % otherwise retain MATLAB's glossy defaults and react to lights created
+    % later for the Moon or other scene content.
+    globe.FaceLighting = 'none';
+    globe.SpecularStrength = 0.0;
+    globe.DiffuseStrength = 1.0;
+    globe.AmbientStrength = 1.0;
+    globe.BackFaceLighting = 'unlit';
+    globe.EdgeLighting = 'none';
 end
 
 if options.animate

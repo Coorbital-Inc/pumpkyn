@@ -121,6 +121,8 @@ globe = surf( ...
     'FaceColor','none', ...
     'EdgeColor',0.5*[1 1 1]);
 
+pumpkyn.util.setOutwardNormals(globe,posOffset);
+
 hold(h,'on');
 
 

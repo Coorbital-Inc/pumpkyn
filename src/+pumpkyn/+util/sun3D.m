@@ -19,13 +19,8 @@ if nargin == 0
    scale = 1;
 end
 
-npanels = 100;   % Number of globe panels around the equator deg/panel = 360/npanels
-alpha   = 1.0;   % globe transparency level, 1 = opaque, through 0 = invisible
-
-% Earth texture image
-% Anything imread() will handle), but needs to be a 2:1 unprojected globe
-    image_file = [fileparts(mfilename("fullpath")),filesep,'Sun.jpg'];
-
+npanels = 32;    % A solid Sun needs only a modest mesh for animation
+sunColor = [1.0,0.72,0.05];
 % Mean spherical earth
 erad    = glb.Sun.Rad; % equatorial radius (meters)
 prad    = glb.Sun.Rad; % polar radius (meters)
@@ -33,7 +28,7 @@ prad    = glb.Sun.Rad; % polar radius (meters)
 
 %% Create figure
 if ~overlay
-    figure('Color','k','Name','3D Sun Viewer','Renderer','opengl');
+    figure('Color','k','Name','3D Sun Viewer');
     hold on;
     % Turn off the normal axes
     set(gca, 'NextPlot','add','color','k');
@@ -49,21 +44,17 @@ if ~exist('h','var')
     h = gca;
 end
 
-%% Create wireframe globe
+%% Create Sun globe
 % Create a 3D meshgrid of the sphere points using the ellipsoid function
 [x, y, z] = ellipsoid(0, 0, 0, erad, erad, prad, npanels);
 x =  x.*scale + posOffset(1);
 y =  y.*scale + posOffset(2);
 z = -z.*scale + posOffset(3);
-globe = surf(h, x, y, z, 'FaceColor', 'none', 'EdgeColor', 0.5*[1 1 1]); hold on;
-
-%% Texturemap the globe
-% Load Moon image for texture map
-
-    cdata = imread(image_file);
-    % Set image as color data (cdata) property, and set face color to indicate
-    % a texturemap, which Matlab expects to be in cdata. Turn off the mesh edges.
-    set(globe, 'FaceColor', 'texturemap', 'CData', cdata, 'FaceAlpha', alpha, 'EdgeColor', 'none');
-%    colormap gray;
+globe = surf( ...
+    h,x,y,z, ...
+    'FaceColor',sunColor, ...
+    'FaceLighting','none', ...
+    'FaceAlpha',1, ...
+    'EdgeColor','none');
 globe.Annotation.LegendInformation.IconDisplayStyle = 'off';
 end
