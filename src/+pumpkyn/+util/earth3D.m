@@ -81,7 +81,7 @@ if ~isfield(options,'animate')
      options.animate = false; 
 end
 if ~isfield(options,'type')
-        options.type = 'night'; 
+        options.type = 'day'; 
 end
 if ~isfield(options,'stars')
        options.stars = false; 
@@ -184,8 +184,9 @@ if ~options.overlay
 end
 
 %% Create wireframe globe
-% Create a 3D meshgrid of the sphere points using the ellipsoid function
-[x,y,z] = getEarthMesh(erad,prad,npanels);
+% Create a mesh whose texture rows correspond to geodetic latitude.
+[x,y,z,normalX,normalY,normalZ] = getEarthMesh( ...
+    erad,prad,npanels);
 globe = surf(gca(www),options.posOffset(1)+x.*options.scale, ...
              options.posOffset(2)+y.*options.scale, ...
              options.posOffset(3)-z.*options.scale, ...
@@ -199,19 +200,20 @@ if options.atmos
     max_alt_km = 100;             
     base_color = [0.3, 0.6, 1.0]; 
     
-    rad_base = sqrt(x.^2 + y.^2 + z.^2);
     atmos = gobjects(num_layers, 1);
     
     for i = 1:num_layers
         fraction = (i / num_layers)^1.5; 
         layer_alt = max_alt_km * fraction;
         
-        scale_ratio = (rad_base + layer_alt) ./ rad_base;
-        
-        % Apply user transformations exactly as done for the main globe
-        x_atm = options.posOffset(1) + (x .* scale_ratio) .* options.scale;
-        y_atm = options.posOffset(2) + (y .* scale_ratio) .* options.scale;
-        z_atm = options.posOffset(3) - (z .* scale_ratio) .* options.scale;
+        % Constant geodetic altitude follows the ellipsoid surface normal,
+        % rather than a radial line from the center of the Earth.
+        x_atm = options.posOffset(1) + ...
+            (x+layer_alt.*normalX).*options.scale;
+        y_atm = options.posOffset(2) + ...
+            (y+layer_alt.*normalY).*options.scale;
+        z_atm = options.posOffset(3) - ...
+            (z+layer_alt.*normalZ).*options.scale;
         
         layer_alpha = 0.05 * (1 - fraction)^2; 
         
@@ -335,11 +337,13 @@ if options.animate
 end
 end
 
-function [x,y,z] = getEarthMesh(erad,prad,npanels)
-%% Cache the most recently used base Earth mesh.
+function [x,y,z,normalX,normalY,normalZ] = ...
+    getEarthMesh(erad,prad,npanels)
+%% Cache a latitude/longitude mesh registered in geodetic coordinates.
 
 persistent cachedEquatorialRadius cachedPolarRadius cachedPanelCount
 persistent cachedX cachedY cachedZ
+persistent cachedNormalX cachedNormalY cachedNormalZ
 
 cacheMatches = ...
     ~isempty(cachedPanelCount) && ...
@@ -348,8 +352,23 @@ cacheMatches = ...
     cachedPolarRadius == prad;
 
 if ~cacheMatches
-    [cachedX,cachedY,cachedZ] = ellipsoid( ...
-        0,0,0,erad,erad,prad,npanels);
+    longitude = linspace(-pi,pi,npanels+1);
+    geodeticLatitude = linspace(-pi/2,pi/2,npanels+1).';
+    [longitudeGrid,latitudeGrid] = meshgrid( ...
+        longitude,geodeticLatitude);
+
+    eccentricitySquared = 1-(prad/erad)^2;
+    primeVerticalRadius = erad./sqrt( ...
+        1-eccentricitySquared.*sin(latitudeGrid).^2);
+    cachedX = primeVerticalRadius.*cos(latitudeGrid).* ...
+        cos(longitudeGrid);
+    cachedY = primeVerticalRadius.*cos(latitudeGrid).* ...
+        sin(longitudeGrid);
+    cachedZ = primeVerticalRadius.*(1-eccentricitySquared).* ...
+        sin(latitudeGrid);
+    cachedNormalX = cos(latitudeGrid).*cos(longitudeGrid);
+    cachedNormalY = cos(latitudeGrid).*sin(longitudeGrid);
+    cachedNormalZ = sin(latitudeGrid);
 
     cachedEquatorialRadius = erad;
     cachedPolarRadius = prad;
@@ -359,6 +378,9 @@ end
 x = cachedX;
 y = cachedY;
 z = cachedZ;
+normalX = cachedNormalX;
+normalY = cachedNormalY;
+normalZ = cachedNormalZ;
 
 end
 
