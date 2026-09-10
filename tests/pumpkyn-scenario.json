@@ -1,0 +1,18 @@
+{
+  "format_version": 2,
+  "P1": "Earth",
+  "P2": "Moon",
+  "created_by": "pumpkyn three-body explorer",
+  "app_version": "0.1.0",
+  "frame": "cr3bp",
+  "units": "LU/TU",
+  "catalog_revisions": ["sha256:d9def4ff56fcd1242fda6951bd353ce628e297123dc10102137a49638f85c3b6"],
+  "model": {"mass_ratio":0.01215058560962404,"length_km":389703.264829278,"time_s":382981.289129055,"p1_radius_km":6378.1363,"p2_radius_km":1737.1},
+  "solver": {"method":"DOP853","rtol":1e-11,"atol":1e-13,"max_step":0.03},
+  "observer": {"primary":"P2","position":[0.987849414390376,3.34258518414417e-35,-0.004457494090435686],"elevation_mask":0},
+  "analysis": {"compute_gdop":true,"duration":6.283185307179586,"step":0.004699968513066041,"gdop_threshold":6,"required_satellites":4},
+  "orbits": [
+    {"name":"Tulip · 8 petals · S #32","source":{"revision":0,"ref":"tulip-08-s#32"},"state":[1.03153097566369,0,-0.0839711681680593,0,0.0911954044940998,0],"period":5.10412488451695,"repeat":true,"offsets":[0,1.7013749615056497,3.4027499230113003]},
+    {"name":"Halo · L2 · S #485","source":{"revision":0,"ref":"halo-l2-s#485"},"state":[1.1224542905857413,1.831453899345885e-27,-0.18463087694469954,3.8427985496180733e-16,-0.22515107315615496,-2.7735661316117096e-15],"period":2.926831714362461,"repeat":true,"offsets":[0,0.9756105714541534,1.9512211429083073]}
+  ]
+}
