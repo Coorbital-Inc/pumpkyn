@@ -101,11 +101,11 @@ end
       nullDF = null(DF, tol);
       nullDF = nullDF(:, 1); 
           Vd = [x0(1:6); tau0];
-           V = Vd + ds*nullDF;      % Initial guess of the next orbit
            
      if dot(nullDFstar,nullDF,1) < 0
         nullDF = -nullDF; 
      end
+           V = Vd + ds*nullDF;      % Predict with the aligned tangent.
      
      while (convErr > tol) && iter < maxIter 
          [~,xx] = pumpkyn.cr3bp.prop([0 V(end)],[V(1:6); PHI0(:)],mu);           
