@@ -62,22 +62,24 @@ LOS_uv = LOS./rho;        %Make a Unit Vector of the postions [t x 3 x M x N]
      N = size(LOS,4);     %Number of receivers
      t = size(LOS,1);     %Number of time steps
      
-%% Create the cofactor matrix (Qx):  
-        qXYZT = NaN(t,4,N);
-            
-for tr=1:t   %For each time step
-  for tt=1:N %For each receiver
-           thisLOS = LOS_uv(tr,:,~maskIdx(tr,:,tt),tt);
-           if size(thisLOS,3) < 4
-               continue;
-           end
-                 A = ones(size(thisLOS,3),4);
-          A(:,1:3) = permute(thisLOS,[3 2 1]);
-          %A'*A will alway be a 4 x 4 matrix
-          %qXYZT(tr,:,tt) = diag(inv(A'*A));
-    qXYZT(tr,:,tt) = inv44Diag(A'*A);
-  end
+%% Assemble geometry matrices for all times and receivers:
+                M = size(LOS,3);     %Number of satellites
+                A = permute(cat(2,LOS_uv,ones(t,1,M,N)),[3 2 1 4]);
+           masked = permute(reshape(maskIdx,t,1,M,N),[3 2 1 4]);
+%Zero masked rows, including the clock column and any nonfinite positions:
+A(repmat(masked,[1 4 1 1])) = 0;
+                A = reshape(A,M,4,t*N);
+         validIdx = reshape(sum(~maskIdx,2),t*N,1) >= 4;
+
+%% Compute inverse diagonals for samples with at least four satellites:
+            qXYZT = NaN(t*N,4);
+if any(validIdx)
+                A = A(:,:,validIdx);
+               Qx = pagemtimes(A,'transpose',A,'none'); %A'*A per sample
+              qii = inv44Diag(Qx);
+ qXYZT(validIdx,:) = reshape(permute(qii,[3 2 1]),[],4);
 end
+            qXYZT = permute(reshape(qXYZT,t,N,4),[1 3 2]);
 
 dop = cat(dim3,sqrt(sum(qXYZT,2)), ...
                sqrt(sum(qXYZT(:,1:3,:),2)), ...
@@ -89,24 +91,24 @@ function AID = inv44Diag(A)
 %% Purpose:
 %
 %  This routine will compute the inverse of matrix A, which is expected
-%  to be a 4 x 4 square matrix and return only the diagonal elements.
+%  to be a 4 x 4 x P array and return its diagonal elements [1 x 4 x P].
 %
 
   a11 = A(1,1,:);  a12 = A(1,2,:); a13 = A(1,3,:); a14 = A(1,4,:);
   a21 = A(2,1,:);  a22 = A(2,2,:); a23 = A(2,3,:); a24 = A(2,4,:);
   a31 = A(3,1,:);  a32 = A(3,2,:); a33 = A(3,3,:); a34 = A(3,4,:);
   a41 = A(4,1,:);  a42 = A(4,2,:); a43 = A(4,3,:); a44 = A(4,4,:);
-denom = a11*a22*a33*a44 - a11*a22*a34*a43 - a11*a23*a32*a44 + ...
-        a11*a23*a34*a42 + a11*a24*a32*a43 - a11*a24*a33*a42 - ...
-        a12*a21*a33*a44 + a12*a21*a34*a43 + a12*a23*a31*a44 - ...
-        a12*a23*a34*a41 - a12*a24*a31*a43 + a12*a24*a33*a41 + ...
-        a13*a21*a32*a44 - a13*a21*a34*a42 - a13*a22*a31*a44 + ...
-        a13*a22*a34*a41 + a13*a24*a31*a42 - a13*a24*a32*a41 - ...
-        a14*a21*a32*a43 + a14*a21*a33*a42 + a14*a22*a31*a43 - ...
-        a14*a22*a33*a41 - a14*a23*a31*a42 + a14*a23*a32*a41;
-term11 =   a22*a33*a44 - a22*a34*a43 - a23*a32*a44 + a23*a34*a42 + a24*a32*a43 - a24*a33*a42;
-term22 =   a11*a33*a44 - a11*a34*a43 - a13*a31*a44 + a13*a34*a41 + a14*a31*a43 - a14*a33*a41;
-term33 =   a11*a22*a44 - a11*a24*a42 - a12*a21*a44 + a12*a24*a41 + a14*a21*a42 - a14*a22*a41;
-term44 =  a11*a22*a33 - a11*a23*a32 - a12*a21*a33 + a12*a23*a31 + a13*a21*a32 - a13*a22*a31;
+denom = a11.*a22.*a33.*a44 - a11.*a22.*a34.*a43 - a11.*a23.*a32.*a44 + ...
+        a11.*a23.*a34.*a42 + a11.*a24.*a32.*a43 - a11.*a24.*a33.*a42 - ...
+        a12.*a21.*a33.*a44 + a12.*a21.*a34.*a43 + a12.*a23.*a31.*a44 - ...
+        a12.*a23.*a34.*a41 - a12.*a24.*a31.*a43 + a12.*a24.*a33.*a41 + ...
+        a13.*a21.*a32.*a44 - a13.*a21.*a34.*a42 - a13.*a22.*a31.*a44 + ...
+        a13.*a22.*a34.*a41 + a13.*a24.*a31.*a42 - a13.*a24.*a32.*a41 - ...
+        a14.*a21.*a32.*a43 + a14.*a21.*a33.*a42 + a14.*a22.*a31.*a43 - ...
+        a14.*a22.*a33.*a41 - a14.*a23.*a31.*a42 + a14.*a23.*a32.*a41;
+term11 =   a22.*a33.*a44 - a22.*a34.*a43 - a23.*a32.*a44 + a23.*a34.*a42 + a24.*a32.*a43 - a24.*a33.*a42;
+term22 =   a11.*a33.*a44 - a11.*a34.*a43 - a13.*a31.*a44 + a13.*a34.*a41 + a14.*a31.*a43 - a14.*a33.*a41;
+term33 =   a11.*a22.*a44 - a11.*a24.*a42 - a12.*a21.*a44 + a12.*a24.*a41 + a14.*a21.*a42 - a14.*a22.*a41;
+term44 =  a11.*a22.*a33 - a11.*a23.*a32 - a12.*a21.*a33 + a12.*a23.*a31 + a13.*a21.*a32 - a13.*a22.*a31;
    AID = abs([term11,term22,term33,term44]./denom);
 end

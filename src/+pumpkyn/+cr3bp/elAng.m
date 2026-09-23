@@ -1,4 +1,4 @@
-function phi = elAng(rObs,rTgt,dr,dim3)
+function phi = elAng(rObs,rTgt,dr,dim3,minElAng)
 %% Purpose:
 %
 %  This routine will determine the elevation angle of rTgt relative to rObs.
@@ -17,11 +17,17 @@ function phi = elAng(rObs,rTgt,dr,dim3)
 %  dim3                     integer                 Singleton dimension
 %                                                   specifier
 %
+%  minElAng                 Optional scalar elevation threshold (rad), in
+%                           [-pi/2, pi/2]. If supplied, return a logical
+%                           visibility mask instead of elevation angles.
+%
 %% Outputs:
 %
 %  phi                      [N x 1 x M]             Elevation Angle (rad)
 %                                                   of target relative
 %                                                   to the observer
+%                           With minElAng: true at or above the threshold;
+%                           false for undefined/nonfinite geometry.
 %
 %% Revision History:
 %  Darin C. Koblick                                             08-27-2025
@@ -44,7 +50,29 @@ if nargin == 0
       axis equal;
     return;
 end
-rObs2Tgt = rTgt-rObs;
-   theta = pumpkyn.util.bsxAng(rObs2Tgt,rObs-dr,dim3);   %Zenith Angle
-     phi = (90 - theta).*pi/180;            %90 deg - Zenith = Elevation
+  rObs2Tgt = rTgt-rObs;
+        up = rObs-dr;
+projection = pumpkyn.util.bsxDot(rObs2Tgt,up,dim3);
+
+if nargin == 5
+    if minElAng == 0
+        % Only the sign matters at the horizon. Exclude undefined geometry
+        % without computing ranges or inverse trigonometric functions.
+        valid = all(isfinite(rObs2Tgt),dim3) & all(isfinite(up),dim3) & ...
+                any(rObs2Tgt ~= 0,dim3) & any(up ~= 0,dim3);
+        phi = valid & projection >= 0;
+        return;
+    end
+end
+
+sinEl = projection ./ (pumpkyn.util.vmag(rObs2Tgt,dim3) .* ...
+                       pumpkyn.util.vmag(up,dim3));
+% Clamp roundoff at zenith/nadir while preserving undefined angles as NaN.
+sinEl(sinEl > 1) = 1;
+sinEl(sinEl < -1) = -1;
+if nargin == 5
+    phi = sinEl >= sin(minElAng);
+else
+    phi = asin(sinEl);
+end
 end
