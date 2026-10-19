@@ -1,11 +1,8 @@
-
 # Station Keeping Estimation
 
 Compute the upper and lower bounds required to station keep in a pumpkin orbit.
 
-
 This tutorial demonstrates: 1. Generating a pumpkin orbit 2. Setting up station keeping constraints 3. Plotting and visualizing bounds
-
 
 Station\-keeping analysis is essential for understanding how much ΔV is required to correct small deviations from a periodic orbit due to model inaccuracies, navigation errors, or dynamical instabilities.
 
@@ -26,6 +23,7 @@ Define the desired pumpkin orbit parameters:
 [tau0,x0,muStar,tStar,lStar] = pumpkyn.cr3bp.getTulip(tau0,Np,pm,1e-12);
                         data = pumpkyn.cr3bp.orbitProperties(x0,tau0,muStar,lStar);
 ```
+
 # Set Up the Station\-Keeping Constraints
 
 The following parameters define the correction schedule and allowable velocity dispersions used in the ΔV estimation.
@@ -40,6 +38,7 @@ The following parameters define the correction schedule and allowable velocity d
 % Compute the number of correction maneuvers per year based on dTau.
                        N = (365.25*86400/tStar)./dTau;      % # burns/year
 ```
+
 # Estimate Station\-Keeping ΔV Bounds Using Linear Stability Theory
 
 The function pumpkyn.cr3bp.stationKeeping\_deltaV() uses the eigenvalues of the monodromy matrix (linearized orbit dynamics) to estimate upper and lower ΔV bounds. These correspond to: \- Lower Bound (dV\_LB): Ideal correction, perfect control \- Upper Bound (dV\_UB): Realistic correction, includes execution and navigation errors (~factor of 3 margin)
@@ -55,6 +54,7 @@ end
                        dV_LB = (dV_LB.*lStar./tStar).*1000; %m/s
                        dV_UB = (dV_UB.*lStar./tStar).*1000; %m/s    
 ```
+
 # Plot Station\-Keeping Bounds
 
 This figure visualizes the total annual ΔV required to maintain a pumpkin\-shaped orbit as a function of correction frequency. It shows the lower, upper, and average estimates, with uncertainty shading.

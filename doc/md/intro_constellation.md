@@ -1,8 +1,6 @@
-
 # Purpose:
 
 Demonstrates how to generate and visualize a constellation of satellites evenly spaced in time along a tulip\-shaped orbit in the Earth–Moon Circular Restricted Three\-Body Problem (CR3BP).
-
 
 Each satellite follows the same tulip\-shaped trajectory, but with different phase offsets (pseudo\-anomalies) so that they are uniformly distributed around the orbit. This configuration can represent a synchronous cislunar communications or observation constellation.
 
@@ -25,6 +23,7 @@ Each satellite follows the same tulip\-shaped trajectory, but with different pha
  [tau,r,~,mu,lStar] = pumpkyn.cr3bp.tulipConstellation(Np,tau0,Nr,pm,dtau);
      
 ```
+
 # Show the Moon\-Centered Inertial Trajectory:
 
 Display a 3D Moon sphere located at its barycentric position \[1\-mu, 0, 0\]. This helps visualize the orbits relative to the Moon in the rotating frame.
@@ -34,6 +33,7 @@ pumpkyn.cr3bp.showMoon(lStar,mu);
 % Plot the reference tulip-shaped orbit of the first satellite.
 plot3(r(:,1,1),r(:,2,1),r(:,3,1),'w','LineWidth',2);
 ```
+
 # Show Each Starting Position of the Satellites:
 
 Plot the initial positions of all satellites at t = 0 to show how they are evenly distributed along the orbit.

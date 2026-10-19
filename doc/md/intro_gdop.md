@@ -1,8 +1,6 @@
-
 # Computing GDOP at the Lunar South Pole
 
 This tutorial demonstrates how to compute the **\*Geometric Dilution of Precision (GDOP)**\* for a surface observer located at the lunar south pole, using a constellation of satellites in a tulip\-shaped orbit family modeled in the Earth–Moon CR3BP.
-
 
 GDOP quantifies how the geometry of the visible satellites affects position and timing accuracy for navigation or communication users. Lower GDOP values indicate better geometric diversity and higher precision.
 
@@ -14,7 +12,7 @@ GDOP quantifies how the geometry of the visible satellites affects position and 
 % (e.g., genetic algorithm) that minimizes GDOP and maximizes coverage.
 dtau =  [0.171755901906622
          0.538936510214872
-1.91530114835572
+         1.91530114835572
          2.28537063968867
          3.66203724308906
          4.02638956895957]';
@@ -33,6 +31,7 @@ dtau =  [0.171755901906622
 [tau,rTgt,vTgt,mu,lStar,tStar] = pumpkyn.cr3bp.tulipConstellation(Np, ...
                                  tau0,Nr,pm,dtau);
 ```
+
 # Interpolate Trajectories based on discretized time step:
 
 Define a fixed time step for interpolation (30 minutes)
@@ -46,9 +45,11 @@ Define a fixed time step for interpolation (30 minutes)
                     vTgt = interp1(tau,vTgt,tau_i,'spline');
                      tau = tau_i;
 
+
 % This ensures that all satellites are sampled synchronously in time,
 % which is essential for GDOP and visibility calculations.
 ```
+
 # Determine Satellite Visibility from the South Pole Observer
 ```matlab
                minElAng = 0*pi/180;
@@ -62,10 +63,12 @@ Define a fixed time step for interpolation (30 minutes)
                  elMask = permute(phi < minElAng,[1 3 2]);
                     
 ```
+
 # Compute the Number of Satellites in View Over Time
 ```matlab
 % Count the number of satellites with elevation above the mask angle
 Nsats = sum(phi >= minElAng,3);
+
 
 % Plot the number of satellites in view as a function of time
 figure('Color',[1 1 1]);
@@ -74,6 +77,7 @@ set(gca,'YTick', 0:1:numel(dtau)+1); ylim([0 numel(dtau)+1]);
 grid on; xlabel('Time [Days]'); ylabel('Satellites In View');
 title('Lunar South Pole Visibility from Tulip Constellation');
 ```
+
 # Interpretation:
 
 Steps indicate discrete changes in which satellites are visible. At least four satellites are needed for 3D navigation. Periodic gaps reveal coverage limits inherent to the resonance geometry.
@@ -90,10 +94,9 @@ plot(tau.*tStar./86400,gdop);
 grid on; ylim([0 8]); xlabel('Time [Days]'); ylabel('GDOP'); 
 title('Geometric Dilution of Precision (GDOP) at Lunar South Pole');
 ```
+
 # Interpretation:
 
 Lower GDOP → better satellite geometry and stronger navigation accuracy. Higher GDOP → satellites are clustered or low on the horizon. The periodic GDOP oscillations reflect the constellation's resonant motion.
 
-
 This analysis can help identify optimal orbital geometries and phasing for continuous PNT coverage of the lunar south pole.
-

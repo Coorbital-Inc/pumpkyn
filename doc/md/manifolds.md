@@ -1,14 +1,10 @@
-
 # Finding Unstable Manifolds
 
 This tutorial demonstrates how to compute and visualize the **\*invariant manifolds**\* associated with a tulip\-shaped orbit in the Earth–Moon CR3BP.
 
-
 Invariant manifolds represent natural dynamical pathways: • The **\*stable manifold** **guides trajectories that asymptotically approach the orbit. • The \*\*unstable manifold** \* describes paths that naturally depart from it.
 
-
 These structures are central to low\-energy transfer design, lunar capture, and disposal trajectory studies. Manifolds also provide insight into orbit stability and long\-term dynamical behavior.
-
 
 Here, we focus on the **\*unstable manifold**\*, which emerges from small perturbations along the orbit's unstable eigenvectors. Note: orbits with a stability index close to 1 may not generate usable (distinct) manifolds.
 
@@ -29,6 +25,7 @@ Here, we focus on the **\*unstable manifold**\*, which emerges from small pertur
 % Select the initial state vector (position + velocity) at t = 0
                     x0 = [r(1,:),v(1,:)];
 
+
 % Compute the Stability Index
 % The stability index k quantifies how perturbations evolve near the orbit.
 %   k ≈ 1   → Orbit is neutrally stable
@@ -39,6 +36,7 @@ Here, we focus on the **\*unstable manifold**\*, which emerges from small pertur
                      k = pumpkyn.cr3bp.stabilityIndex(x0,tau0,muStar);
                      fprintf(1,'Stability Index = %f\n',k);
 ```
+
 # Determine and Visualize Manifolds
 
 Number of sample points along the orbit which manifolds will be launched
@@ -74,7 +72,7 @@ Number of sample points along the orbit which manifolds will be launched
  plot3(x0Vec(:,1),x0Vec(:,2),x0Vec(:,3),'.','markersize',12,'color','white');
  set(gca,'Clipping','off');
 ```
+
 # Interpretation:
 
 The white trajectories are the unstable manifolds—natural escape paths. Each originates from a slightly perturbed state along the tulip orbit. Their geometry reveals low\-energy transfer routes and long\-term dynamical structure within the cislunar region.
-

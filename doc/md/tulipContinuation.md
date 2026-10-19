@@ -1,17 +1,15 @@
-
 # Tulip\-Shaped Orbit Pseudo\-Arclength Continuation
 
 This tutorial demonstrates how to extend a tulip\-shaped orbit family using pseudo\-arclength continuation in the Earth–Moon CR3BP.
 
-
 The continuation process incrementally adjusts an existing periodic orbit (the "seed") to find nearby family members with slightly different energy or period. Repeating this procedure allows tracing an entire branch of orbits until a desired target period is reached.
-
 
 This is a key technique for exploring resonant families and understanding how orbit geometry evolves as a function of energy.
 
 ```matlab
 clear all;
 ```
+
 # Specify the Tulip\-Family:
 ```matlab
                  Np = 7;          %Number of petals
@@ -28,6 +26,7 @@ clear all;
 %   lStar – characteristic length scale [km]
 [tau0,~,mu,~,lStar] = pumpkyn.cr3bp.getTulip(0,Np,pm);
 ```
+
 # Run Pseudo\-Arclength Continuation Until a Sidereal Period is Reached
 
 The pseudo\-arclength continuation method incrementally varies the period (tau0) and corrects the initial state (x0) to converge on a nearby periodic orbit. This allows the orbit family to be traced continuously, even through bifurcation or turning points where traditional continuation fails.
@@ -43,6 +42,7 @@ tau0Max = 2*pi;
      ds = 0;
   count = 0;
  nullDF = zeros(7,1); 
+
 
 while tau0 < tau0Max     
     if count == 0

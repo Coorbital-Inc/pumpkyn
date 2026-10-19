@@ -1,4 +1,3 @@
-
 # Surface Coverage Analysis
 
 This example demonstrates how to use Pumpkyn's CR3BP tools to perform preliminary lunar surface coverage analysis. The workflow supports both single satellites and multi\-satellite constellations, provided that all vehicle trajectories share a common epoch.
@@ -18,6 +17,7 @@ Generate a constellation of satellites in tulip\-shaped orbits using the cr3bp.t
                dtau = linspace(0,0.5*tau0/Ns,Ns); %Pseudo-Anomaly (ND)
  [tau,r,v,muStar,lStar,tStar] = pumpkyn.cr3bp.tulipConstellation(Np,tau0,Nr,pm,dtau);
 ```
+
 # Generate Lunar Surface Points
 
 Approximate the Moon's surface with a discrete point sphere. These locations serve as ground sites for coverage evaluation.
@@ -28,6 +28,7 @@ Approximate the Moon's surface with a discrete point sphere. These locations ser
            rPt0 = [1-muStar,0,0]; % Moon barycentric offset
  [rPts,lla,xyz] = pumpkyn.cr3bp.pointSphere(Npts,rPt0,rP);
 ```
+
 # Compute Maximum Gap Times
 
 For each surface point, compute the maximum continuous time interval during which no satellite exceeds a specified elevation mask angle.
@@ -38,6 +39,7 @@ For each surface point, compute the maximum continuous time interval during whic
     maxGapTimes = pumpkyn.cr3bp.maxGaps(tau,r,rPts,rPt0,minElAng,1,dTau);
     maxGapTimes = reshape(maxGapTimes,[size(xyz,1), size(xyz,2)]);
 ```
+
 # Visualize Coverage Results
 
 Plot the Moon in a body\-fixed frame, color\-coded by maximum coverage gap (hours). Satellite trajectories are overlaid for context.

@@ -1,8 +1,6 @@
-
 # Creating a Pumpkin Orbit
 
 This tutorial demonstrates how to: 1. Generate a pumpkin\-shaped orbit in the Earth–Moon CR3BP 2. Propagate the trajectory in the rotating barycentric frame 3. Plot and interpret the orbit's key dynamical properties
-
 
 Pumpkin orbits are members of the tulip\-shaped family that exhibit sidereal resonance with the Moon. They typically have high symmetry, repeating petal\-like loops, and are of particular interest for cislunar navigation, relay, and observation missions.
 
@@ -30,6 +28,7 @@ Define the desired tulip family parameters:
 % Propagate one full period of the orbit using the CR3BP equations of motion.
                     [tau, x] = pumpkyn.cr3bp.prop(tau0,x0,mu);
 ```
+
 # Plot Orbit in the Rotating Frame
 
 This section visualizes the pumpkin\-shaped orbit in the barycentric rotating frame, with the Moon shown for reference. The pumpkin orbit exhibits repeating loops (petals) around the Moon, forming a distinct 13\-petal pattern when viewed over a full cycle.
@@ -43,6 +42,7 @@ This section visualizes the pumpkin\-shaped orbit in the barycentric rotating fr
  axis equal; set(gca,'clipping','off'); view(290,0);
  title('\color{orange}13-Petal Pumpkin Orbit');
 ```
+
 # Compute and Display Orbit Properties
 
 Compute and display key physical and dynamical properties of the orbit, including its stability index, energy (Jacobi constant), and altitudes. These values help characterize the orbit's behavior and mission relevance.
@@ -55,6 +55,7 @@ disp(['Jacobi Constant: ', num2str(data.Jacobi)]);
 disp(['Perilune Alt: ',    num2str(data.Perilune.*lStar - rMoon),' [km]']);
 disp(['Apolune Alt:  ',    num2str(data.Apolune.*lStar - rMoon),' [km]']);
 disp(['Total Lunar Occultation:  ',    num2str(data.TotLunarOcc.*tStar./3600),' [Hrs]']);
+
 
 % Interpretation:
 %   Stability Index  → Quantifies orbital sensitivity to perturbations.

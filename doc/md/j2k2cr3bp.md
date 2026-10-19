@@ -1,8 +1,6 @@
-
 # Converting a Low Lunar Orbit (LLO) from J2K to CR3BP Coordinates
 
 This tutorial demonstrates how to convert a low lunar orbit defined in the Moon\-centered inertial (J2K) frame into the barycentric rotating frame used in the Circular Restricted Three\-Body Problem (CR3BP).
-
 
 The conversion allows comparison between traditional two\-body orbits (as used in standard mission analysis) and their equivalent representation in the CR3BP framework, enabling hybrid modeling and low\-energy transfer design.
 
@@ -13,9 +11,11 @@ The conversion allows comparison between traditional two\-body orbits (as used i
               G = 6.67384e-20;              %Gravitational Constant
               M = 5.9736E24 + 7.35E22;      %Char mass (sum of primaries)
 
+
 % These constants define the Earth–Moon CR3BP system parameters.
 % The gravitational influence of the spacecraft is neglected (restricted case).
 ```
+
 # Define a Low Lunar Orbit (LLO) in the Moon\-Centered Inertial Frame
 ```matlab
           muMoon = G*mu*M;
@@ -31,6 +31,7 @@ The conversion allows comparison between traditional two\-body orbits (as used i
 % This represents a 100 km circular low lunar orbit, typical of mapping
 % or reconnaissance missions (e.g., LRO-type trajectories).
 ```
+
 # Convert from J2K to CR3BP Frame
 ```matlab
 % The fromJ2K() routine transforms the initial J2K state into the
@@ -50,6 +51,7 @@ The conversion allows comparison between traditional two\-body orbits (as used i
 % Compute the orbit period in CR3BP dimensionless time units
             tau0 = P/tStar;
 ```
+
 # Propagate the Orbit in the CR3BP Frame
 
 Propagate for several orbital periods to observe motion in the rotating frame.
@@ -57,6 +59,7 @@ Propagate for several orbital periods to observe motion in the rotating frame.
 ```matlab
           [tau,x] = pumpkyn.cr3bp.prop(tau0*5,x0,mu);
 ```
+
 # Visualize the Orbit Relative to the Moon
 
 Display the Moon at its barycentric position \[1 \- mu, 0, 0\].
@@ -67,7 +70,7 @@ pumpkyn.cr3bp.showMoon();
 plot3(x(:,1),x(:,2),x(:,3),'b');
 axis equal; set(gca,'clipping','off');
 ```
+
 # Interpretation:
 
 The blue trajectory represents the same 100 km LLO, now expressed in the Earth–Moon rotating reference frame. This conversion enables hybrid modeling where two\-body and three\-body effects can be compared directly.
-
