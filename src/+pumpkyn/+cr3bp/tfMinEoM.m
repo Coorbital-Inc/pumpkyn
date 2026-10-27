@@ -44,7 +44,7 @@ function [yDot,Ht,dHdy,aThrust] = tfMinEoM(tau,y,Tmax,c,muStar) %#ok<INUSD>
 %                                                   dimensionless time tau.
 %% Revision History:
 %  Darin C. Koblick                                          (c) 10/27/2025
-%  Factored gravity / Hamiltonian derivatives                 10/19/2026
+%  Factored gravity / Hamiltonian derivatives                    10/19/2026
 %  Copyright Coorbital Inc.
 %% ------------------------ Begin Code Sequence ---------------------------
 if nargin == 0
