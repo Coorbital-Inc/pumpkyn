@@ -8,7 +8,8 @@ function rv = fromOrb(t,oev,M,muStar,tStar,lStar,P)
 %
 %% Inputs:
 %
-%  t                    [N  x 1]            Time from epoch [s]
+%  t                    [N  x 1]            P = 1: Julian date [days]
+%                                           P = 2: Time from epoch [s]
 %
 %  oev                  [N x 6]             Keplerian Orbital Elements:
 %                                           ---------
@@ -18,6 +19,8 @@ function rv = fromOrb(t,oev,M,muStar,tStar,lStar,P)
 %                                           argp (rad)
 %                                           raan (rad)
 %                                           trua (rad)
+%                                           P = 1: J2000 equatorial axes
+%                                           P = 2: Ideal CR3BP inertial axes
 %
 %  M                    double              Characteristic mass of
 %                                           primaries M = m1 + m2
@@ -55,6 +58,13 @@ end
 %Convert from orbital elements to PCI:
 [r0,v0] = pumpkyn.cr3bp.orb2eci(mu, oev, 2);
 
-%Convert from PCI to the appropiate reference primary:
+%Convert to the appropriate rotating reference frame:
+if P == 1
+    [rv,tStar2,lStar2] = pumpkyn.cr3bp.fromJ2K(t(:),[r0,v0],muStar,M,P,2);
+              rEarth = [-muStar,0,0];
+          rv(:,1:3) = (rv(:,1:3)-rEarth).*lStar2./lStar + rEarth;
+          rv(:,4:6) = rv(:,4:6).*(lStar2./tStar2).*(tStar./lStar);
+else
      rv = pumpkyn.cr3bp.fromPCI(t./tStar,[r0,v0],muStar,tStar,lStar,P);
+end
 end
