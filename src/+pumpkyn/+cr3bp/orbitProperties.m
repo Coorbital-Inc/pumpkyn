@@ -60,7 +60,7 @@ if nargin == 0
 end
 
 %% Propagate Oribt a full Period
-           [tau,x] = pumpkyn.cr3bp.prop(tau0,[x0(:); reshape(eye(6),[36 1])],muStar);
+           [tau,x] = pumpkyn.cr3bp.prop(tau0,[x0(:); reshape(eye(6),[36 1])]',muStar,2);
             data.x = x;
           data.tau = tau;
 %% Extract the Monodromy Matrix:
